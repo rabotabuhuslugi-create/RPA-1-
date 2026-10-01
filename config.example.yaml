@@ -1,0 +1,33 @@
+# Скопируйте в config.yaml и заполните.
+folders:
+  inbox: ./inbox          # сюда кладутся сканы (PDF/JPG/PNG/TIFF)
+  processed: ./processed  # успешно загруженные
+  errors: ./errors        # не распознаны / ошибка загрузки
+
+ocr:
+  lang: rus+eng
+  tesseract_cmd: null     # напр. C:\Program Files\Tesseract-OCR\tesseract.exe
+  poppler_path: null      # Windows: путь к bin Poppler для PDF
+  dpi: 300
+
+onec:
+  # Включите в 1С публикацию стандартного интерфейса OData (Администрирование -> ... -> Состав OData)
+  base_url: "http://server/ka/odata/standard.odata"
+  user: "rpa_user"
+  password_env: "ONEC_PASSWORD"   # пароль берется из переменной окружения
+  verify_tls: true
+  own_inn: "7700000000"   # ИНН вашей организации (исключается при поиске контрагента)
+  organization_key: "00000000-0000-0000-0000-000000000000"   # GUID организации
+  warehouse_key: null                                         # GUID склада (если обязателен)
+  document_entity: "Document_ПоступлениеТоваровУслуг"
+  counterparty_entity: "Catalog_Контрагенты"
+  contract_entity: "Catalog_ДоговорыКонтрагентов"
+  attachment_entity: "Catalog_ПрисоединенныеФайлы"
+  attachment_data_field: "ФайлХранилище_Base64"   # зависит от конфигурации, проверьте в $metadata
+  post_document: false      # false = оставить черновик для проверки человеком
+  extra_document_fields:    # любые обязательные реквизиты вашей базы
+    ВидОперации: "Товары"
+
+rpa:
+  poll_seconds: 30          # 0 = один проход и выход
+  min_confidence_fields: 3  # минимум найденных полей (номер, дата, ИНН, сумма)
