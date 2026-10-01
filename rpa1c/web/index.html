@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPA 1С — панель управления</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#111827;--mut:#6b7280;--side:#0f172a;--acc:#2563eb;--ok:#16a34a;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--err:#dc2626;--errbg:#fee2e2;--line:#e5e7eb;--blue:#dbeafe}
+*{box-sizing:border-box}body{margin:0;font:15px/1.4 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+aside{width:250px;background:var(--side);color:#cbd5e1;padding:18px 12px;flex:none}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 18px;border-bottom:1px solid #1e293b;margin-bottom:14px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--acc);display:grid;place-items:center;font-size:22px}
+.brand b{color:#fff;display:block}.brand small{color:#94a3b8}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:12px 14px;border-radius:10px;cursor:pointer;margin-bottom:4px}
+nav button.on{background:var(--acc);color:#fff}nav button:hover:not(.on){background:#1e293b}
+main{flex:1;padding:28px;min-width:0}h1{margin:0 0 20px;font-size:26px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:20px}
+.card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 1px 3px #0001}
+.stat{display:flex;justify-content:space-between;align-items:center}.stat span{color:var(--mut);font-size:14px}.stat b{font-size:32px;display:block}
+.ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px}
+h2{margin:0 0 14px;font-size:19px;display:flex;justify-content:space-between;align-items:center}
+.badge{font-size:12px;padding:3px 10px;border-radius:99px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-err{background:var(--errbg);color:var(--err)}.b-gray{background:#e5e7eb;color:#374151}.b-blue{background:var(--blue);color:#1d4ed8}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.box{background:#f8fafc;border-radius:10px;padding:12px 14px}.box small{color:var(--mut);display:block;margin-bottom:4px}
+.steps{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}
+.step{flex:1;min-width:120px;padding:8px 10px;border-radius:8px;background:#f1f5f9;color:#94a3b8;font-size:13px;text-align:center}
+.step.done{background:var(--okbg);color:var(--ok)}.step.cur{background:var(--blue);color:#1d4ed8;font-weight:600;animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.55}}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:9px;padding:9px 16px;font:inherit;cursor:pointer}
+button.btn.sec{background:#e5e7eb;color:#111}button.btn.sm{padding:4px 10px;font-size:13px}
+.row{display:flex;gap:12px;align-items:center;padding:11px 12px;background:#f8fafc;border-radius:10px;margin-bottom:8px}
+.row .nm{flex:1;min-width:0}.row .nm div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row small{color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--mut);font-weight:600;font-size:13px}
+.drop{border:2px dashed #cbd5e1;border-radius:14px;padding:40px;text-align:center;color:var(--mut);cursor:pointer}.drop.hov{border-color:var(--acc);background:#eff6ff}
+pre{margin:0;background:#0b1220;color:#d1d5db;border-radius:10px;padding:14px;max-height:62vh;overflow:auto;font:12.5px/1.5 Consolas,monospace;white-space:pre-wrap}
+.e{color:#fca5a5}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:#9ca3af}.dot.on{background:var(--ok);animation:p 1.2s infinite}
+.tab{display:none}.tab.on{display:block}
+@media(max-width:760px){body{flex-direction:column}aside{width:auto}nav{display:flex;flex-wrap:wrap}nav button{width:auto}}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand"><div class="logo">🤖</div><div><b>RPA 1С</b><small>Загрузка по скану</small></div></div>
+  <nav>
+    <button class="on" data-t="dash">📊 Панель управления</button>
+    <button data-t="upload">☁️ Загрузка сканов</button>
+    <button data-t="docs">📄 Документы</button>
+    <button data-t="log">⌨️ Журнал</button>
+  </nav>
+</aside>
+<main>
+<section class="tab on" id="dash">
+  <h1>Панель управления</h1>
+  <div class="cards">
+    <div class="card stat"><div><span>Обработано сегодня</span><b id="s-today">–</b></div><div class="ico" style="background:#dcfce7">✅</div></div>
+    <div class="card stat"><div><span>В очереди</span><b id="s-queue">–</b></div><div class="ico" style="background:#fef3c7">🕒</div></div>
+    <div class="card stat"><div><span>Ошибки</span><b id="s-err">–</b></div><div class="ico" style="background:#fee2e2">⚠️</div></div>
+    <div class="card stat"><div><span>Загружено в 1С</span><b id="s-loaded">–</b></div><div class="ico" style="background:#dbeafe">🗄️</div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <h2>Статус робота <span id="r-badge" class="badge b-gray">…</span></h2>
+    <div class="grid3">
+      <div class="box"><small>Текущая задача</small><b id="r-cur">–</b></div>
+      <div class="box"><small>Время работы</small><b id="r-up">–</b></div>
+      <div class="box"><small>Скорость обработки</small><b id="r-speed">–</b></div>
+      <div class="box"><small>Следующая проверка</small><b id="r-next">–</b></div>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div style="margin-top:16px;display:flex;gap:10px"><button class="btn" id="btn-pause">⏸ Пауза</button><span id="r-note" style="color:var(--mut);align-self:center"></span></div>
+  </div>
+  <div class="card"><h2>Последние документы</h2><div id="recent"></div></div>
+</section>
+
+<section class="tab" id="upload">
+  <h1>Загрузка сканов</h1>
+  <div class="card">
+    <div class="drop" id="drop">Перетащите сюда PDF / JPG / PNG / TIFF<br>или нажмите, чтобы выбрать файлы</div>
+    <input type="file" id="file" multiple accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.bmp" hidden>
+    <div id="up-res" style="margin-top:14px"></div>
+  </div>
+  <div class="card" style="margin-top:20px"><h2>Очередь (inbox)</h2><div id="queue"></div></div>
+</section>
+
+<section class="tab" id="docs">
+  <h1>Документы</h1>
+  <div class="card" style="overflow-x:auto"><table><thead><tr><th>Время</th><th>Файл</th><th>№</th><th>Дата</th><th>ИНН</th><th>Сумма</th><th>Статус</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
+</section>
+
+<section class="tab" id="log">
+  <h1>Журнал</h1>
+  <pre id="logbox"></pre>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const STAGES=["Распознавание (OCR)","Разбор реквизитов","Создание документа в 1С","Прикрепление скана","Проведение документа"];
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button,.tab").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");$(b.dataset.t).classList.add("on");});
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const fmtDur=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}ч ${m}мин`:m?`${m}мин ${s%60}с`:`${s}с`};
+const ST={loaded:["Загружен","b-ok"],recognized:["Распознан","b-blue"],error:["Ошибка","b-err"]};
+const money=v=>v==null?"–":v.toLocaleString("ru-RU",{minimumFractionDigits:2});
+let paused=false, last=null;
+
+async function post(u){return (await fetch(u,{method:"POST"})).json()}
+$("btn-pause").onclick=async()=>{await post(paused?"/api/resume":"/api/pause");refresh()};
+async function retry(n){await post("/api/retry?name="+encodeURIComponent(n));refresh()}
+
+function render(d){
+  last=d;const r=d.robot,s=d.stats;paused=r.paused;
+  $("s-today").textContent=s.today;$("s-queue").textContent=s.queue;$("s-err").textContent=s.errors;$("s-loaded").textContent=s.loaded;
+  const b=$("r-badge");let txt,cls;
+  if(!r.online&&r.state!=="paused"){txt="● Остановлен";cls="b-gray"}
+  else if(r.state==="paused"){txt="⏸ На паузе";cls="b-warn"}
+  else if(r.state==="working"){txt="● Работает";cls="b-ok"}
+  else{txt="● Ожидает файлы";cls="b-blue"}
+  b.textContent=txt+(r.dry_run?" (тест, без 1С)":"");b.className="badge "+cls;
+  $("r-cur").textContent=r.current||(r.online?"Нет активной задачи":"–");
+  $("r-up").textContent=r.online&&r.started_at?fmtDur(d.now-r.started_at):"–";
+  $("r-speed").textContent=s.avg_seconds?`~${s.avg_seconds} с/документ`:"–";
+  $("r-next").textContent=r.next_run?`через ${Math.max(0,Math.round(r.next_run-d.now))} с`:"–";
+  $("btn-pause").textContent=paused?"▶ Продолжить":"⏸ Пауза";
+  $("r-note").textContent=r.online?"":"Робот не запущен: python -m rpa1c.main --dashboard";
+  const st=$("steps");st.replaceChildren();
+  const ci=STAGES.indexOf(r.stage);
+  STAGES.forEach((n,i)=>{if(i===4&&!(r.stage===n))return;
+    st.append(el("div","step"+(ci>i?" done":ci===i?" cur":""),(ci>i?"✓ ":"")+n))});
+  // recent
+  const rc=$("recent");rc.replaceChildren();
+  if(!d.recent.length)rc.append(el("div","",""),Object.assign(el("small","","Документов пока нет")));
+  d.recent.slice(0,6).forEach(h=>{const [t,c]=ST[h.status]||[h.status,"b-gray"];
+    const row=el("div","row"),nm=el("div","nm"),a=el("div","",h.file);
+    nm.append(a,el("small","",h.ts.replace("T"," ")+(h.error?" — "+h.error:"")));
+    row.append(nm,el("span","badge "+c,t));rc.append(row)});
+  if(r.current){const row=el("div","row"),nm=el("div","nm");nm.append(el("div","",r.current),el("small","",r.stage||""));
+    row.append(nm,el("span","badge b-warn","Обработка"));rc.prepend(row)}
+  // queue
+  const q=$("queue");q.replaceChildren();
+  if(!d.queue.length)q.append(el("small","","Очередь пуста"));
+  d.queue.forEach(n=>{const row=el("div","row"),nm=el("div","nm");nm.append(el("div","",n));row.append(nm,el("span","badge b-warn","В очереди"));q.append(row)});
+  // table
+  const tb=$("tbody");tb.replaceChildren();
+  d.recent.forEach(h=>{const tr=el("tr"),[t,c]=ST[h.status]||[h.status,"b-gray"];
+    [h.ts.replace("T"," "),h.file,h.number||"–",h.date||"–",h.inn||"–",money(h.total)].forEach(x=>tr.append(el("td","",x)));
+    const td=el("td");td.append(el("span","badge "+c,t));if(h.error){const er=el("div","",h.error);er.style.cssText="color:#dc2626;font-size:12px;margin-top:4px";td.append(er)}
+    tr.append(td);const ac=el("td");
+    if(h.status==="error"&&d.error_files.includes(h.file)){const bt=el("button","btn sm sec","Повторить");bt.onclick=()=>retry(h.file);ac.append(bt)}
+    tr.append(ac);tb.append(tr)});
+  // log
+  const lb=$("logbox"),atEnd=lb.scrollTop+lb.clientHeight>=lb.scrollHeight-30;
+  lb.replaceChildren();d.log.forEach(l=>{const s=el("div",/ ERROR /.test(l)?"e":"",l);lb.append(s)});
+  if(atEnd)lb.scrollTop=lb.scrollHeight;
+}
+async function refresh(){try{render(await (await fetch("/api/state")).json())}catch(e){$("r-badge").textContent="нет связи с панелью";$("r-badge").className="badge b-err"}}
+refresh();setInterval(refresh,2000);
+
+// upload
+const drop=$("drop"),fi=$("file");
+drop.onclick=()=>fi.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add("hov")};
+drop.ondragleave=()=>drop.classList.remove("hov");
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove("hov");up(e.dataTransfer.files)};
+fi.onchange=()=>{up(fi.files);fi.value=""};
+async function up(files){
+  const box=$("up-res");
+  for(const f of files){
+    const row=el("div","row"),nm=el("div","nm");nm.append(el("div","",f.name));const bd=el("span","badge b-warn","Загрузка…");row.append(nm,bd);box.prepend(row);
+    try{const r=await (await fetch("/api/upload?name="+encodeURIComponent(f.name),{method:"POST",body:f})).json();
+      bd.textContent=r.ok?"В очереди":r.error;bd.className="badge "+(r.ok?"b-ok":"b-err")}
+    catch(e){bd.textContent="Ошибка";bd.className="badge b-err"}
+  }refresh()}
+</script>
+</body>
+</html>
