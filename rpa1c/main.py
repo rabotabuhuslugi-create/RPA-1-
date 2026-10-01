@@ -63,11 +63,18 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     cfg = cfgmod.load(a.config)
     poll = cfg["rpa"]["poll_seconds"]
-    while True:
-        run_once(cfg, a.dry_run)
-        if not poll or a.dry_run:
-            break
-        time.sleep(poll)
+    log.info("Старт. Папка inbox: %s, интервал опроса: %s с (Ctrl+C - остановка)",
+             Path(cfg["folders"]["inbox"]).resolve(), poll)
+    try:
+        while True:
+            n = run_once(cfg, a.dry_run)
+            log.info("Проход завершен, файлов обработано: %d", n)
+            if not poll or a.dry_run:
+                break
+            log.info("Жду %s с до следующей проверки...", poll)
+            time.sleep(poll)
+    except KeyboardInterrupt:
+        log.info("Остановлено пользователем")
 
 
 if __name__ == "__main__":
