@@ -5,6 +5,8 @@
 (черновик или проведённый) → скан прикрепляется к документу → файл уходит в `processed`
 (или в `errors` вместе с `.error.json`).
 
+Для Windows см. [INSTALL_WINDOWS.md](INSTALL_WINDOWS.md).
+
 ## Установка
 1. Python 3.10+, `pip install -r requirements.txt`
 2. Установить Tesseract OCR с русским языком (и Poppler для PDF).
