@@ -4,3 +4,4 @@ inbox/
 processed/
 errors/
 .venv/
+debug/

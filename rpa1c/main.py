@@ -16,7 +16,10 @@ log = logging.getLogger("rpa1c")
 
 def process(path: Path, cfg: dict, onec: OneC, dry_run: bool) -> None:
     text = scan_to_text(path, cfg["ocr"])
-    data = parse(text, cfg["onec"].get("own_inn"))
+    dbg = Path(cfg["folders"].get("debug", "./debug"))
+    dbg.mkdir(parents=True, exist_ok=True)
+    (dbg / f"{path.name}.txt").write_text(text, encoding="utf-8")
+    data = parse(text, cfg["onec"].get("own_inn"), filename=path.stem)
     log.info("%s: %s", path.name, data)
     if data.found() < cfg["rpa"]["min_confidence_fields"] or not (data.number and data.doc_date and data.inn):
         raise ValueError("Недостаточно реквизитов (нужны номер, дата, ИНН контрагента)")

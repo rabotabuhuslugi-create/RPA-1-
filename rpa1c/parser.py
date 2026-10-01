@@ -36,20 +36,47 @@ def _date(text: str) -> date | None:
     m = re.search(r"(\d{1,2})\s+(%s)\s+(\d{4})" % "|".join(MONTHS), text, re.I)
     if m:
         return date(int(m[3]), MONTHS[m[2].lower()], int(m[1]))
-    m = re.search(r"\b(\d{2})[./](\d{2})[./](\d{4})\b", text)
+    m = re.search(r"\b(\d{2})[./](\d{2})[./](\d{4}|\d{2})\b", text)
     if m:
+        y = int(m[3])
+        y = y + 2000 if y < 100 else y
         try:
-            return date(int(m[3]), int(m[2]), int(m[1]))
+            return date(y, int(m[2]), int(m[1]))
         except ValueError:
             return None
     return None
 
 
-def parse(text: str, own_inn: str | None = None) -> DocData:
+MONEY = r"\d{1,3}(?:[ \u00a0]\d{3})+[.,]\d{2}|\d+[.,]\d{2}"
+
+
+def _amounts(text: str) -> list[Decimal]:
+    out = []
+    for m in re.finditer(MONEY, text):
+        v = _money(m[0])
+        if v is not None:
+            out.append(v)
+    return out
+
+
+def _number_from_name(name: str | None) -> str | None:
+    if not name:
+        return None
+    m = re.search(r"(?:№|N)\s*([\w\-/]+)", name)
+    return m[1] if m else None
+
+
+def _date_from_name(name: str | None) -> date | None:
+    return _date(name) if name else None
+
+
+def parse(text: str, own_inn: str | None = None, filename: str | None = None) -> DocData:
     d = DocData()
+    # номер: после слова-заголовка и знака №; допускаем буквенный префикс (ТК000123)
     m = re.search(
-        r"(?:счет[- ]фактура|счет|накладная|упд|акт)[^\n№N]{0,40}(?:№|N|No)\s*([\w\-/]+)"
-        r"(?:\s+от\s+)?([^\n]{0,30})",
+        r"(?:счет[- ]?фактура|счет|накладная|упд|универсальный\s+передаточный\s+документ|акт)"
+        r"[^\n№]{0,60}?(?:№|N[o°]?\.?)\s*([A-Za-zА-Яа-я]{0,5}[\d][\w\-/]*)"
+        r"([^\n]{0,40})",
         text, re.I,
     )
     if m:
@@ -57,22 +84,51 @@ def parse(text: str, own_inn: str | None = None) -> DocData:
         d.doc_date = _date(m[2])
     if d.doc_date is None:
         d.doc_date = _date(text)
+    # запасной вариант: имя файла вида "УПД №950 от 18.09.26.pdf"
+    if d.number is None or not re.search(r"\d", d.number):
+        d.number = _number_from_name(filename) or d.number
+    if d.doc_date is None:
+        d.doc_date = _date_from_name(filename)
 
-    inns = re.findall(r"ИНН[:\s/А-Яа-я]*?(\d{10}|\d{12})\b", text)
+    inns = re.findall(r"ИНН[^\d\n]{0,25}(\d{10}|\d{12})\b", text)
     d.org_inns = list(dict.fromkeys(inns))
-    # контрагент = первый ИНН, не равный ИНН нашей организации
     for i in d.org_inns:
         if i != own_inn:
             d.inn = i
             break
-    m = re.search(r"КПП[:\s/А-Яа-я]*?(\d{9})\b", text)
+    m = re.search(r"КПП[^\d\n]{0,25}(\d{9})\b", text)
     d.kpp = m[1] if m else None
 
-    m = re.search(r"всего\s+к\s+оплате[^\d\n]*([\d\s\u00a0]+[.,]\d{2})", text, re.I) or \
-        re.search(r"итого[^\d\n]*([\d\s\u00a0]+[.,]\d{2})", text, re.I)
-    if m:
-        d.total = _money(m[1])
-    m = re.search(r"(?:в\s+т\.?\s*ч\.?\s*)?НДС[^\d\n]*([\d\s\u00a0]+[.,]\d{2})", text, re.I)
-    if m:
-        d.vat = _money(m[1])
+    d.total, d.vat = _totals(text)
+    if d.vat is None:
+        m = re.search(r"НДС[^\d\n]{0,30}(" + MONEY + ")", text, re.I)
+        if m:
+            d.vat = _money(m[1])
     return d
+
+
+def _totals(text: str) -> tuple[Decimal | None, Decimal | None]:
+    lines = text.splitlines()
+    for key in (r"всего\s+к\s+оплате", r"всего\s+по\s+счету", r"итого\s+к\s+оплате",
+                r"к\s+оплате", r"итого", r"всего"):
+        for idx, ln in enumerate(lines):
+            if re.search(key, ln, re.I):
+                # строка итогов УПД: [сумма без НДС] [акциз] [НДС] [сумма с НДС];
+                # иногда числа переносятся на следующие строки
+                nums = _amounts(ln)
+                span = 1
+                while not nums and span < 3 and idx + span < len(lines):
+                    nums = _amounts(lines[idx + span])
+                    span += 1
+                if not nums:
+                    continue
+                total = nums[-1]
+                vat = nums[-2] if len(nums) >= 3 else None
+                m = re.search(r"НДС[^\d\n]*(" + MONEY + ")", " ".join(lines[idx:idx + span + 1]), re.I)
+                if m and len(nums) > 1:
+                    vat = _money(m[1])
+                if re.search(r"без\s+НДС", " ".join(lines[idx:idx + span + 1]), re.I):
+                    vat = Decimal("0")
+                return total, vat
+    nums = _amounts(text)
+    return (max(nums) if nums else None), None

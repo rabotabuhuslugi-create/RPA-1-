@@ -3,6 +3,7 @@ folders:
   inbox: ./inbox          # сюда кладутся сканы (PDF/JPG/PNG/TIFF)
   processed: ./processed  # успешно загруженные
   errors: ./errors        # не распознаны / ошибка загрузки
+  debug: ./debug          # сюда сохраняется распознанный текст каждого скана
 
 ocr:
   lang: rus+eng
