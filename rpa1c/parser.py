@@ -70,6 +70,21 @@ def _date_from_name(name: str | None) -> date | None:
     return _date(name) if name else None
 
 
+def _valid(d: date | None) -> date | None:
+    """Дата документа не может быть древней или из далекого будущего."""
+    if d and 2015 <= d.year <= date.today().year + 1:
+        return d
+    return None
+
+
+def _clean_dates(text: str) -> str:
+    """Убираем строки-ссылки на нормативные акты (в шапке УПД: 'от 26 декабря 2011 г. N 1137')."""
+    return "\n".join(
+        ln for ln in text.splitlines()
+        if not re.search(r"постановлен|правительств|приложение\s*N?\s*\d", ln, re.I)
+    )
+
+
 def parse(text: str, own_inn: str | None = None, filename: str | None = None) -> DocData:
     d = DocData()
     # номер: после слова-заголовка и знака №; допускаем буквенный префикс (ТК000123)
@@ -81,14 +96,14 @@ def parse(text: str, own_inn: str | None = None, filename: str | None = None) ->
     )
     if m:
         d.number = m[1].strip()
-        d.doc_date = _date(m[2])
-    if d.doc_date is None:
-        d.doc_date = _date(text)
+        d.doc_date = _valid(_date(m[2]))
     # запасной вариант: имя файла вида "УПД №950 от 18.09.26.pdf"
     if d.number is None or not re.search(r"\d", d.number):
         d.number = _number_from_name(filename) or d.number
     if d.doc_date is None:
-        d.doc_date = _date_from_name(filename)
+        d.doc_date = _valid(_date_from_name(filename))
+    if d.doc_date is None:
+        d.doc_date = _valid(_date(_clean_dates(text)))
 
     inns = re.findall(r"ИНН[^\d\n]{0,25}(\d{10}|\d{12})\b", text)
     d.org_inns = list(dict.fromkeys(inns))

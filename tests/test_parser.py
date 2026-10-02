@@ -42,3 +42,10 @@ def test_filename_fallback_and_two_digit_year():
     d = parse("мусор без реквизитов", filename="УПД №950 от 18.09.26")
     assert d.number == "950"
     assert d.doc_date == date(2026, 9, 18)
+
+
+def test_regulation_date_ignored():
+    text = ("Приложение N 1 к постановлению Правительства РФ от 26 декабря 2011 г. N 1137\n"
+            "Счет-фактура № ТК0000000309 (1)\nПродавец ИНН 263203039147\n")
+    d = parse(text, filename="УПД №ТК0000000309 от 31.08.26")
+    assert d.doc_date == date(2026, 8, 31)

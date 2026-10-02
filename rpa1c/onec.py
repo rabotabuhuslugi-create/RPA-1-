@@ -36,7 +36,12 @@ class OneC:
     def _post(self, entity: str, body: dict) -> dict:
         r = self.s.post(f"{self.base}/{quote(entity)}?$format=json", json=body, timeout=120)
         if not r.ok:
-            raise RuntimeError(f"1С {r.status_code}: {r.text[:500]}")
+            hint = ""
+            if "Не удалось записать" in r.text:
+                hint = ("\nПодсказка: 1С не записала объект, обычно не заполнены обязательные реквизиты. "
+                        "Выполните `python -m rpa1c.sample`, чтобы увидеть, что заполнено в реальном документе, "
+                        "и добавьте нужное в extra_document_fields (config.yaml).")
+            raise RuntimeError(f"1С {r.status_code}: {r.text[:500]}{hint}")
         return r.json()
 
     def find_counterparty(self, inn: str, kpp: str | None) -> dict | None:
