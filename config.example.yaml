@@ -20,7 +20,9 @@ onec:
   verify_tls: true
   own_inn: "7700000000"   # ИНН вашей организации (исключается при поиске контрагента)
   organization_key: "00000000-0000-0000-0000-000000000000"   # GUID организации
-  warehouse_key: null                                         # GUID склада (если обязателен)
+  warehouse_key: null       # GUID склада (Склад_Key) - скопируйте из `python -m rpa1c.sample`
+  department_key: null      # GUID подразделения (Подразделение_Key) - оттуда же
+  currency_key: null        # GUID валюты, если ее нет в договоре (Валюта_Key)
   document_entity: "Document_ПриобретениеТоваровУслуг"
   counterparty_entity: "Catalog_Контрагенты"
   contract_entity: "Catalog_ДоговорыКонтрагентов"

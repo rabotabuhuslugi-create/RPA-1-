@@ -16,6 +16,20 @@ def basic_auth(user: str, password: str) -> str:
 
 log = logging.getLogger("rpa1c")
 
+EMPTY_GUID = "00000000-0000-0000-0000-000000000000"
+
+# значения, принятые в КА для закупки у поставщика (по образцу реального документа);
+# переопределяются через onec.extra_document_fields в config.yaml
+DEFAULT_FIELDS = {
+    "ХозяйственнаяОперация": "ЗакупкаУПоставщика",
+    "НалогообложениеНДС": "ПродажаОблагаетсяНДС",
+    "ЗакупкаПодДеятельность": "ПродажаОблагаетсяНДС",
+    "ЦенаВключаетНДС": True,
+    "ПорядокРасчетов": "ПоДоговорамКонтрагентов",
+    "КурсЧислитель": 1,
+    "КурсЗнаменатель": 1,
+}
+
 
 class OneC:
     def __init__(self, cfg: dict):
@@ -51,7 +65,7 @@ class OneC:
             rows = sorted(rows, key=lambda r: r.get("КПП") != kpp)
         return rows[0] if rows else None
 
-    def find_contract(self, counterparty_key: str) -> str | None:
+    def find_contract(self, counterparty_key: str) -> dict | None:
         """Первый действующий договор контрагента; поле владельца зависит от конфигурации."""
         fields = [self.c.get("contract_owner_field"), "Контрагент_Key", "Owner_Key"]
         for field in dict.fromkeys(f for f in fields if f):
@@ -61,29 +75,50 @@ class OneC:
                 except RuntimeError as e:
                     log.warning("Поиск договора по %s%s не удался: %s", field, extra, e)
                     continue
-                return rows[0]["Ref_Key"] if rows else None
+                return rows[0] if rows else None
         return None
 
     def create_document(self, d: DocData) -> dict:
         cp = self.find_counterparty(d.inn, d.kpp)
         if not cp:
             raise LookupError(f"Контрагент с ИНН {d.inn} не найден в 1С")
+        stamp = f"{d.doc_date.isoformat()}T12:00:00"
         body = {
-            "Date": f"{d.doc_date.isoformat()}T00:00:00",
+            **DEFAULT_FIELDS,
+            "Date": stamp,
             "Организация_Key": self.c["organization_key"],
             "Контрагент_Key": cp["Ref_Key"],
             "НомерВходящегоДокумента": d.number,
-            "ДатаВходящегоДокумента": f"{d.doc_date.isoformat()}T00:00:00",
+            "ДатаВходящегоДокумента": stamp,
+            "НомерСчетаФактуры": d.number,
+            "ДатаСчетаФактуры": stamp,
             "СуммаДокумента": float(d.total) if d.total is not None else 0,
-            **self.c.get("extra_document_fields", {}),
         }
         if cp.get("Партнер_Key"):
             body["Партнер_Key"] = cp["Партнер_Key"]
         contract = self.find_contract(cp["Ref_Key"])
         if contract:
-            body["Договор_Key"] = contract
-        if self.c.get("warehouse_key"):
-            body["Склад_Key"] = self.c["warehouse_key"]
+            body["Договор_Key"] = contract["Ref_Key"]
+            cur = contract.get("ВалютаВзаиморасчетов_Key") or contract.get("Валюта_Key")
+            if cur and cur != EMPTY_GUID:
+                body["Валюта_Key"] = body["ВалютаВзаиморасчетов_Key"] = cur
+        else:
+            log.warning("У контрагента %s не найден договор: документ создается без договора", d.inn)
+        for cfg_key, field in (("warehouse_key", "Склад_Key"), ("department_key", "Подразделение_Key"),
+                               ("currency_key", None)):
+            v = self.c.get(cfg_key)
+            if not v:
+                continue
+            if field:
+                body[field] = v
+            else:  # валюта по умолчанию, если ее нет в договоре
+                body.setdefault("Валюта_Key", v)
+                body.setdefault("ВалютаВзаиморасчетов_Key", v)
+        for k in ("Склад_Key", "Подразделение_Key", "Валюта_Key"):
+            if k not in body:
+                log.warning("Не задано %s: если 1С откажет в записи, укажите его в config.yaml "
+                            "(значения смотрите в `python -m rpa1c.sample`)", k)
+        body.update(self.c.get("extra_document_fields") or {})
         return self._post(self.c["document_entity"], body)
 
     def attach_scan(self, doc: dict, path: Path) -> dict:

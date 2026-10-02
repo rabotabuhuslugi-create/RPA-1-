@@ -77,3 +77,25 @@ def test_check_lists_missing(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "OK       Document_ПоступлениеТоваровУслуг" in out
     assert "Метаданные.Справочники.Контрагенты" in out
+
+
+def test_create_document_body():
+    from datetime import date
+    from decimal import Decimal
+
+    from rpa1c.onec import OneC
+    from rpa1c.parser import DocData
+
+    o = OneC({"base_url": "http://x", "user": "u", "password": "p", "organization_key": "ORG",
+              "warehouse_key": "WH", "department_key": "DEP", "document_entity": "Document_ПриобретениеТоваровУслуг",
+              "counterparty_entity": "c", "contract_entity": "k",
+              "extra_document_fields": {"ХозяйственнаяОперация": "Другая"}})
+    o.find_counterparty = lambda inn, kpp: {"Ref_Key": "CP", "Партнер_Key": "PR"}
+    o.find_contract = lambda key: {"Ref_Key": "CT", "ВалютаВзаиморасчетов_Key": "CUR"}
+    sent = {}
+    o._post = lambda entity, body: sent.update(body) or {"Ref_Key": "D"}
+    o.create_document(DocData(number="950", doc_date=date(2026, 9, 18), inn="1", total=Decimal("57600")))
+    assert sent["Договор_Key"] == "CT" and sent["Валюта_Key"] == "CUR" and sent["Склад_Key"] == "WH"
+    assert sent["Подразделение_Key"] == "DEP" and sent["Партнер_Key"] == "PR"
+    assert sent["ХозяйственнаяОперация"] == "Другая"          # config перекрывает значения по умолчанию
+    assert sent["НалогообложениеНДС"] == "ПродажаОблагаетсяНДС" and sent["Date"].startswith("2026-09-18")
