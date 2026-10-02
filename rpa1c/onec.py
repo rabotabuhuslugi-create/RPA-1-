@@ -1,5 +1,6 @@
 """Клиент стандартного интерфейса OData 1С:Комплексная автоматизация."""
 import base64
+import logging
 from pathlib import Path
 from urllib.parse import quote
 
@@ -11,6 +12,9 @@ from .parser import DocData
 def basic_auth(user: str, password: str) -> str:
     """Заголовок Basic в UTF-8 (requests по умолчанию кодирует в latin-1 и ломает кириллицу)."""
     return "Basic " + base64.b64encode(f"{user}:{password}".encode("utf-8")).decode("ascii")
+
+
+log = logging.getLogger("rpa1c")
 
 
 class OneC:
@@ -25,7 +29,8 @@ class OneC:
     def _get(self, entity: str, flt: str, top: int = 1) -> list[dict]:
         url = f"{self.base}/{quote(entity)}?$format=json&$top={top}&$filter={quote(flt)}"
         r = self.s.get(url, timeout=60)
-        r.raise_for_status()
+        if not r.ok:
+            raise RuntimeError(f"1С {r.status_code} при запросе {entity}: {r.text[:500]}")
         return r.json().get("value", [])
 
     def _post(self, entity: str, body: dict) -> dict:
@@ -42,8 +47,17 @@ class OneC:
         return rows[0] if rows else None
 
     def find_contract(self, counterparty_key: str) -> str | None:
-        rows = self._get(self.c["contract_entity"], f"Owner_Key eq guid'{counterparty_key}'")
-        return rows[0]["Ref_Key"] if rows else None
+        """Первый действующий договор контрагента; поле владельца зависит от конфигурации."""
+        fields = [self.c.get("contract_owner_field"), "Контрагент_Key", "Owner_Key"]
+        for field in dict.fromkeys(f for f in fields if f):
+            for extra in (" and DeletionMark eq false", ""):
+                try:
+                    rows = self._get(self.c["contract_entity"], f"{field} eq guid'{counterparty_key}'{extra}")
+                except RuntimeError as e:
+                    log.warning("Поиск договора по %s%s не удался: %s", field, extra, e)
+                    continue
+                return rows[0]["Ref_Key"] if rows else None
+        return None
 
     def create_document(self, d: DocData) -> dict:
         cp = self.find_counterparty(d.inn, d.kpp)

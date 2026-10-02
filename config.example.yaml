@@ -24,6 +24,7 @@ onec:
   document_entity: "Document_ПриобретениеТоваровУслуг"
   counterparty_entity: "Catalog_Контрагенты"
   contract_entity: "Catalog_ДоговорыКонтрагентов"
+  contract_owner_field: "Контрагент_Key"   # реквизит договора со ссылкой на контрагента (в КА обычно Контрагент_Key)
   attachment_entity: "Catalog_ПриобретениеТоваровУслугПрисоединенныеФайлы"  # справочник файлов именно этого документа
   attachment_data_field: "ФайлХранилище_Base64"   # зависит от конфигурации, проверьте в $metadata
   post_document: false      # false = оставить черновик для проверки человеком
