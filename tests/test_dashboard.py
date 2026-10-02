@@ -54,3 +54,25 @@ def test_dashboard_api(tmp_path):
         assert _call(srv, "/")[0] == 200
     finally:
         srv.shutdown()
+
+
+def test_check_lists_missing(monkeypatch, capsys):
+    from rpa1c import check, config
+
+    xml = '<EntitySet Name="Catalog_Организации"/><EntitySet Name="Document_ПоступлениеТоваровУслуг"/>'
+
+    class R:
+        text = xml
+        def raise_for_status(self): pass
+
+    monkeypatch.setattr(check.requests, "get", lambda *a, **k: R())
+    monkeypatch.setattr(config, "load", lambda p: {"onec": {
+        "base_url": "http://x", "user": "u", "password": "p",
+        "counterparty_entity": "Catalog_Контрагенты", "contract_entity": "Catalog_ДоговорыКонтрагентов",
+        "document_entity": "Document_ПоступлениеТоваровУслуг",
+        "attachment_entity": "Catalog_ПоступлениеТоваровУслугПрисоединенныеФайлы"}})
+    monkeypatch.setattr("sys.argv", ["check"])
+    assert check.main() == 1
+    out = capsys.readouterr().out
+    assert "OK       Document_ПоступлениеТоваровУслуг" in out
+    assert "Метаданные.Справочники.Контрагенты" in out

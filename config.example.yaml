@@ -24,7 +24,7 @@ onec:
   document_entity: "Document_ПоступлениеТоваровУслуг"
   counterparty_entity: "Catalog_Контрагенты"
   contract_entity: "Catalog_ДоговорыКонтрагентов"
-  attachment_entity: "Catalog_ПрисоединенныеФайлы"
+  attachment_entity: "Catalog_ПоступлениеТоваровУслугПрисоединенныеФайлы"  # справочник файлов именно этого документа
   attachment_data_field: "ФайлХранилище_Base64"   # зависит от конфигурации, проверьте в $metadata
   post_document: false      # false = оставить черновик для проверки человеком
   extra_document_fields:    # любые обязательные реквизиты вашей базы
