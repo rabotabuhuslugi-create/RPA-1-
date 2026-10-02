@@ -62,6 +62,7 @@ def test_check_lists_missing(monkeypatch, capsys):
     xml = '<EntitySet Name="Catalog_Организации"/><EntitySet Name="Document_ПоступлениеТоваровУслуг"/>'
 
     class R:
+        status_code = 200
         text = xml
         def raise_for_status(self): pass
 

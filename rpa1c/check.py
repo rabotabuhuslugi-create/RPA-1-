@@ -6,6 +6,7 @@ import sys
 import requests
 
 from . import config as cfgmod
+from .onec import basic_auth
 
 BSL = """// Выполнить в 1С:Предприятие под администратором (Все функции -> Стандартные -> Выполнить код,
 // либо внешней обработкой). Функция ЗАМЕНЯЕТ состав целиком, поэтому текущий состав сохраняем.
@@ -16,8 +17,13 @@ BSL = """// Выполнить в 1С:Предприятие под админи
 KIND = {"Catalog": "Справочники", "Document": "Документы"}
 
 
-def published(base: str, auth, verify: bool) -> set[str]:
-    r = requests.get(base.rstrip("/") + "/$metadata", auth=auth, verify=verify, timeout=120)
+def published(base: str, user: str, password: str, verify: bool) -> set[str]:
+    r = requests.get(base.rstrip("/") + "/$metadata", headers={"Authorization": basic_auth(user, password)},
+                     verify=verify, timeout=120)
+    if r.status_code == 401:
+        raise PermissionError("401: 1С не приняла логин/пароль")
+    if r.status_code == 404:
+        raise LookupError("404: неверный адрес base_url или OData не опубликован")
     r.raise_for_status()
     return set(re.findall(r'<EntitySet\s+Name="([^"]+)"', r.text))
 
@@ -28,7 +34,18 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="показать все опубликованные объекты")
     a = ap.parse_args()
     o = cfgmod.load(a.config)["onec"]
-    names = published(o["base_url"], (o["user"], o["password"]), o.get("verify_tls", True))
+    print(f"Адрес:  {o['base_url']}")
+    print(f"Логин:  {o['user']!r}")
+    print(f"Пароль: {'задан, символов: ' + str(len(o['password'])) if o['password'] else 'НЕ ЗАДАН (переменная ' + o.get('password_env', '?') + ' пуста)'}")
+    try:
+        names = published(o["base_url"], o["user"], o["password"], o.get("verify_tls", True))
+    except (PermissionError, LookupError, requests.RequestException) as e:
+        print(f"\nОШИБКА: {e}")
+        if isinstance(e, PermissionError):
+            print("Проверьте: 1) логин в config.yaml (точно как в 1С, с учетом регистра и раскладки);"
+                  "\n2) пароль: $env:ONEC_PASSWORD = 'пароль' в ЭТОМ же окне PowerShell;"
+                  "\n3) у пользователя в 1С включена аутентификация 1С:Предприятия и есть доступ к OData.")
+        return 2
     print(f"Опубликовано объектов: {len(names)}")
     if a.list:
         print("\n".join(sorted(names)))

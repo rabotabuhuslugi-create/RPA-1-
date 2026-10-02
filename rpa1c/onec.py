@@ -8,12 +8,17 @@ import requests
 from .parser import DocData
 
 
+def basic_auth(user: str, password: str) -> str:
+    """Заголовок Basic в UTF-8 (requests по умолчанию кодирует в latin-1 и ломает кириллицу)."""
+    return "Basic " + base64.b64encode(f"{user}:{password}".encode("utf-8")).decode("ascii")
+
+
 class OneC:
     def __init__(self, cfg: dict):
         self.c = cfg
         self.base = cfg["base_url"].rstrip("/")
         self.s = requests.Session()
-        self.s.auth = (cfg["user"], cfg["password"])
+        self.s.headers["Authorization"] = basic_auth(cfg["user"], cfg["password"])
         self.s.verify = cfg.get("verify_tls", True)
         self.s.headers.update({"Accept": "application/json"})
 
