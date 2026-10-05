@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:mxl="http://v8.1c.ru/8.2/data/spreadsheet" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.11">
-	<ExternalDataProcessor uuid="c6fa672d-e713-4d58-bcb2-77d04da3d191">
+	<ExternalDataProcessor uuid="bc260f0e-1901-428b-98ab-22783f8f7cf9">
 		<InternalInfo>
 			<xr:ContainedObject>
 				<xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId>
-				<xr:ObjectId>676f3593-f162-4481-844d-c27af32c67e1</xr:ObjectId>
+				<xr:ObjectId>a03c133b-9a01-471c-b4c9-b3841d5bf693</xr:ObjectId>
 			</xr:ContainedObject>
 			<xr:GeneratedType name="ExternalDataProcessorObject.МассовоеКопированиеРеализаций" category="Object">
-				<xr:TypeId>acf59de9-0025-440f-9174-43f2f2a66b07</xr:TypeId>
-				<xr:ValueId>ac45e766-d72f-4327-a05e-0b60909756d4</xr:ValueId>
+				<xr:TypeId>4236173e-c42e-4d83-9949-36dc97b50a38</xr:TypeId>
+				<xr:ValueId>c0ca3dd6-7f36-4135-a5ff-e19a4ed4a7f0</xr:ValueId>
 			</xr:GeneratedType>
 		</InternalInfo>
 		<Properties>
