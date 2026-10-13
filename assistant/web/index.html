@@ -13,11 +13,11 @@ header{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .clock span{color:var(--b3);font-weight:600;letter-spacing:.04em}
 .btn{border:1px solid var(--ln);background:var(--glass);color:var(--ink);padding:11px 18px;border-radius:14px;font:600 14px inherit;font-family:inherit;cursor:pointer;backdrop-filter:blur(14px);transition:.2s}
 .btn:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}.btn.p{background:linear-gradient(135deg,var(--b1),var(--b2));border:0;box-shadow:0 8px 28px #4f46e555}.btn.p:hover{box-shadow:0 10px 36px #4f46e588}.btn.sm{padding:7px 12px;font-size:13px}
-main{flex:1;min-height:0;display:grid;gap:18px;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:1fr 1fr}
+main{flex:1;min-height:0;display:grid;gap:18px;grid-template-columns:1.3fr 1fr 1fr}
 .card{position:relative;background:var(--glass);border:1px solid var(--ln);border-radius:28px;padding:20px;display:flex;flex-direction:column;min-height:0;backdrop-filter:blur(26px);box-shadow:0 20px 60px #0006,inset 0 1px 0 #ffffff14;transition:.25s}
 .card:hover{border-color:#ffffff22;transform:translateY(-2px)}
 .card:before{content:"";position:absolute;inset:0;border-radius:28px;background:radial-gradient(500px 160px at 0 0,var(--g,#3b82f6)22,transparent);pointer-events:none}
-.cal{grid-row:1/3}.mail{grid-row:1/3;grid-column:3}
+
 .hd{display:flex;align-items:center;gap:14px;margin-bottom:14px;position:relative}
 .ic{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,var(--g,#3b82f6),#0003);box-shadow:0 8px 24px color-mix(in srgb,var(--g) 45%,transparent)}
 .hd h2{margin:0;font-size:22px;font-weight:800}.hd small{color:var(--mut);display:block;font-size:13px}.hd .btn{margin-left:auto}
@@ -52,22 +52,37 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
 .toasts{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:9}
 .toast{background:rgba(20,24,44,.95);border:1px solid #3b82f655;border-radius:18px;padding:14px 18px;width:330px;box-shadow:0 12px 40px #000a,0 0 30px #3b82f633;animation:in .4s}
 @keyframes in{from{opacity:0;transform:translateY(20px) scale(.96)}}.toast small{color:var(--b3);font-weight:700}
-@media(max-width:1000px){body{overflow:auto}main{grid-template-columns:1fr}.cal,.mail{grid-row:auto;grid-column:auto}.card{min-height:420px}}
+
+.actions{display:flex;gap:8px}.ib{width:42px;height:42px;padding:0;display:grid;place-items:center;font-size:17px;border-radius:13px}
+.pwonly{display:none}body.pw .pwonly{display:grid}
+.pr{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.pr span{background:#ffffff0d;border:1px solid var(--ln);border-radius:12px;padding:6px 11px;font-size:13px;color:var(--mut)}.pr b{color:var(--ink);font-size:15px}.pr .w b{color:var(--b3)}
+.d.h{color:#fb7185}.d.sh:before{content:"½";position:absolute;top:3px;right:6px;font-size:10px;color:var(--b3)}
+.lg{display:flex;gap:14px;font-size:11px;color:var(--mut);margin-top:8px;flex-wrap:wrap}.lg i{font-style:normal;color:#fb7185}
+@media(max-width:820px){
+ body{overflow:auto;padding:12px;gap:12px}
+ header{gap:10px;flex-wrap:nowrap}.brand h1,.pill{display:none}.logo{width:44px;height:44px;font-size:22px;border-radius:14px}
+ .clock{margin:0 auto}.clock b{font-size:38px}.clock span{font-size:12px}
+ main{grid-template-columns:1fr;display:flex;flex-direction:column;gap:12px;flex:none}
+ .card{padding:14px;border-radius:22px;min-height:360px}.card:hover{transform:none}
+ .ic{width:44px;height:44px;font-size:24px;border-radius:14px}.hd h2{font-size:18px}.hd{gap:10px;margin-bottom:10px}
+ .mg{gap:4px}.d{aspect-ratio:1.5;border-radius:10px;font-size:13px}.blob{opacity:.35}
+ .actions{gap:6px}.ib{width:36px;height:36px;font-size:15px}.drawer{width:100vw}
+ .add{flex-wrap:wrap}.add #ti{flex:1 1 100%!important}.add #td{flex:1;width:auto!important}
+}
 </style>
 <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
-<header>
- <div class="brand"><div class="logo">✺</div><div><h1>Мой помощник</h1><span class="pill"><i class="dot" id="dot"></i><span id="cn">Работает на этом компьютере</span></span></div></div>
- <div class="clock"><b id="t">--:--</b><span id="dt"></span></div>
- <button class="btn" onclick="refresh()">⟳ Обновить</button><button class="btn" onclick="fs()">⛶</button><button class="btn p" onclick="drawer(1)">⚙ Настройки</button>
+<header class="pywebview-drag-region">
+ <div class="brand pywebview-drag-region"><div class="logo">✺</div><div><h1>Мой помощник</h1><span class="pill"><i class="dot" id="dot"></i><span id="cn">Работает на этом компьютере</span></span></div></div>
+ <div class="clock pywebview-drag-region"><b id="t">--:--</b><span id="dt"></span></div>
+ <div class="actions"><button class="btn ib" title="Обновить" onclick="refresh()">⟳</button><button class="btn ib pwonly" title="Развернуть на весь экран" onclick="fs()">⛶</button><button class="btn p ib" title="Настройки" onclick="drawer(1)">⚙</button><button class="btn ib pwonly" title="Свернуть" onclick="pwApi('minimize')">—</button><button class="btn ib pwonly" title="Закрыть помощника" onclick="if(confirm('Закрыть помощника? Напоминания и уведомления прекратятся.'))pwApi('quit')">✕</button></div>
 </header>
 <main>
  <section class="card cal" style="--g:#3b82f6"><div class="hd"><div class="ic">📅</div><div><h2>Календарь</h2><small id="evc"></small></div><button class="btn p sm" onclick="evm(1)">＋ Событие</button></div>
   <div class="mn"><button class="btn sm" onclick="mv(-1)">◀</button><b id="mt"></b><div><button class="btn sm" onclick="goto()">Сегодня</button><button class="btn sm" onclick="mv(1)">▶</button></div></div>
-  <div class="mg" id="mg"></div><div class="body" id="evl" style="margin-top:14px"></div></section>
+  <div class="pr" id="pcs"></div><div class="mg" id="mg"></div><div class="lg"><span>● есть событие</span><span><i>●</i> выходной / праздник</span><span>½ сокращённый день</span></div><div class="body" id="evl" style="margin-top:14px"></div></section>
  <section class="card" style="--g:#6366f1"><div class="hd"><div class="ic">✅</div><div><h2>Задачи</h2><small id="tc"></small></div></div>
   <div class="add"><input id="ti" placeholder="Что нужно сделать?" style="flex:1" onkeydown="if(event.key=='Enter')addT()"><input id="td" type="date" style="width:150px"><button class="btn p" onclick="addT()">＋</button></div><div class="body" id="tl"></div></section>
  <section class="card mail" style="--g:#22d3ee"><div class="hd"><div class="ic">✉️</div><div><h2>Почта<span class="badge" id="mb">0</span></h2><small>Непрочитанные</small></div><button class="btn sm" onclick="openMail()">Открыть почту ↗</button></div><div class="body" id="ml"></div></section>
- <section class="card" style="--g:#818cf8"><div class="hd"><div class="ic">📁</div><div><h2>Файлы</h2><small id="dc"></small></div><button class="btn sm" onclick="openCur()">Открыть папку</button></div><div class="crumb" id="cr"></div><div class="body"><div class="tiles" id="dr"></div></div></section>
 </main>
 
 <div class="hero" id="evm"><div class="card" style="width:min(460px,92vw);gap:12px;--g:#3b82f6">
@@ -90,7 +105,6 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
  <label><input type="checkbox" id="nc"> Напоминания о событиях</label><label><input type="checkbox" id="nm"> Новые письма</label>
  <label>Предупреждать за <input id="nl" type="number" min="1" style="width:80px"> мин</label>
  <label>Проверять календарь / почту каждые <input id="pc" type="number" min="5" style="width:70px"> / <input id="pm" type="number" min="10" style="width:70px"> сек</label>
- <h3>ПАПКИ КОМПЬЮТЕРА</h3><div style="color:var(--mut);font-size:13px">Пути по одному в строке. Пусто — Документы, Рабочий стол, Загрузки.</div><textarea id="fo" rows="4" style="width:100%" placeholder="C:\Договоры"></textarea>
  <details style="margin-top:18px"><summary style="cursor:pointer;color:var(--mut)">Дополнительно: Google (необязательно, из России недоступен)</summary><div id="gs" style="color:var(--mut);margin:8px 0"></div>
  <ol class="steps"><li>Скачайте OAuth-ключ (см. assistant/README.md)</li><li>Загрузите файл ниже</li><li>Нажмите «Подключить» и разрешите доступ</li></ol>
  <div class="row"><label class="btn sm" style="cursor:pointer">1. Загрузить credentials.json<input type="file" accept=".json" id="kf" hidden onchange="upKey(this)"></label><button class="btn p sm" onclick="conn()">2. Подключить Google</button><button class="btn sm" onclick="api('/api/disconnect','POST').then(poll)">Отключить</button></div>
@@ -106,18 +120,25 @@ async function api(p,m='GET',b){const r=await fetch(p,{method:m,headers:{'X-Toke
 const W=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'],MO=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const pad=n=>String(n).padStart(2,'0'),key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 function tick(){const d=new Date();$('t').textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;$('dt').textContent=`${W[d.getDay()]}, ${d.getDate()} ${MO[d.getMonth()]} ${d.getFullYear()}`}setInterval(tick,1000);tick();
-function fs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+function pwApi(n){const a=window.pywebview&&window.pywebview.api;a&&a[n]()}
+window.addEventListener('pywebviewready',()=>document.body.classList.add('pw'));
+function fs(){window.pywebview?pwApi('fullscreen'):(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())}
 function toast(t,x){const e=document.createElement('div');e.className='toast';e.innerHTML=`<small>${esc(t)}</small><div>${esc(x)}</div>`;$('ts').append(e);setTimeout(()=>e.remove(),9000)}
 let S={events:[],mail:[],config:{},connected:false},month=new Date(),sel=null,since=0,stack=[['Мой диск','root']],cfgLoaded=false;month.setDate(1);
 /* календарь */
-function mv(n){month=new Date(month.getFullYear(),month.getMonth()+n,1);drawCal()}
-function goto(){const n=new Date();month=new Date(n.getFullYear(),n.getMonth(),1);sel=key(n);drawCal()}
+function mv(n){month=new Date(month.getFullYear(),month.getMonth()+n,1);drawCal();loadProd()}
+function goto(){const n=new Date();month=new Date(n.getFullYear(),n.getMonth(),1);sel=key(n);drawCal();loadProd()}
+const PC={};
+async function loadProd(){const y=month.getFullYear(),m=month.getMonth()+1,k=y+'-'+m;
+ if(!PC[k]){try{PC[k]=await api(`/api/prodcal?year=${y}&month=${m}`)}catch(e){return}}drawCal()}
 function drawCal(){$('mt').textContent=`${MN[month.getMonth()]} ${month.getFullYear()}`;
  const busy=new Set(S.events.map(e=>key(new Date(e.start)))),today=key(new Date());let h=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<i>${x}</i>`).join('');
  const first=(month.getDay()+6)%7,start=new Date(month.getFullYear(),month.getMonth(),1-first);
  for(let i=0;i<42;i++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=key(d);if(i>=35&&d.getMonth()!=month.getMonth())break;
-  h+=`<div class="d ${busy.has(k)?'e':''} ${k==today?'t':''} ${k==sel?'s':''} ${d.getMonth()!=month.getMonth()?'o':''}" onclick="pickD('${k}')">${d.getDate()}</div>`}
- $('mg').innerHTML=h;drawEv()}
+  const P0=PC[month.getFullYear()+'-'+(month.getMonth()+1)],c=P0&&d.getMonth()==month.getMonth()?P0.days[d.getDate()-1]:'';
+  h+=`<div class="d ${c=='1'?'h':''} ${c=='2'?'sh':''} ${busy.has(k)?'e':''} ${k==today?'t':''} ${k==sel?'s':''} ${d.getMonth()!=month.getMonth()?'o':''}" onclick="pickD('${k}')">${d.getDate()}</div>`}
+ $('mg').innerHTML=h;const P=PC[month.getFullYear()+'-'+(month.getMonth()+1)];
+ $('pcs').innerHTML=P?`<span class="w">Рабочих дней <b>${P.workdays}</b></span><span>Выходных <b>${P.dayoff}</b></span><span>Часов <b>${P.hours}</b></span>`+(P.source=='builtin'?'<span title="Нет связи с isdayoff.ru — показан встроенный календарь">офлайн</span>':''):'';drawEv()}
 function pickD(k){sel=sel==k?null:k;drawCal()}
 function drawEv(){const now=Date.now();let l=S.events.filter(e=>!sel||key(new Date(e.start))==sel);$('evc').textContent=`Событий: ${S.events.length}`;
  $('evl').innerHTML=l.length?l.map(e=>{const d=new Date(e.start);return`<div class="ev ${Math.abs(d-now)<36e5&&!e.all_day?'now':''}" onclick="${e.local?'':`window.open('${esc(e.link)}')`}"><div class="tm">${e.all_day?'весь день':pad(d.getHours())+':'+pad(d.getMinutes())}<div class="dd">${pad(d.getDate())}.${pad(d.getMonth()+1)}</div></div><div><b>${esc(e.title)}</b>${e.local?'':'<span class="tag">Google</span>'}${e.location?`<div class="dd">📍 ${esc(e.location)}</div>`:''}</div>${e.local?`<div class="x" onclick="event.stopPropagation();delEv('${e.id}')">🗑</div>`:''}</div>`}).join(''):'<div class="empty">Нет событий ✨<br><small>Нажмите «＋ Событие», чтобы добавить</small></div>'}
@@ -139,21 +160,13 @@ async function addT(){const t=$('ti').value.trim();if(!t)return;$('ti').value=''
 async function done(id){const e=$('k'+id);e&&e.classList.add('x');await api('/api/tasks/done','POST',{id});setTimeout(loadT,450)}
 async function delT(id){if(confirm('Удалить задачу?')){await api('/api/tasks/delete','POST',{id});loadT()}}
 /* диск */
-let FL=[],cur='';
-async function loadD(p){if(p!==undefined)cur=p;try{FL=await api('/api/files?path='+encodeURIComponent(cur));
- const parts=cur?cur.split(/[\\/]/).filter(Boolean):[];$('cr').innerHTML=`<a style="cursor:pointer;color:var(--b3)" onclick="loadD('')">Компьютер</a>`+(cur?` › <span style="color:var(--ink)">${esc(parts[parts.length-1]||cur)}</span> <a style="cursor:pointer;color:var(--b3)" onclick="upD()">⬆ вверх</a>`:'');
- $('dc').textContent=`Элементов: ${FL.length}`;
- $('dr').innerHTML=FL.length?FL.map((f,i)=>`<div class="tile" onclick="fileClick(${i})"><i>${cur?(f.folder?'📁':'📄'):'⭐'}</i><b>${esc(f.name)}</b></div>`).join(''):'<div class="empty" style="grid-column:1/-1">Папка пуста</div>'}catch(e){$('dr').innerHTML=`<div class="empty" style="grid-column:1/-1">${esc(e.message)}</div>`}}
-function fileClick(i){const f=FL[i];f.folder?loadD(f.path):api('/api/open','POST',{path:f.path}).catch(e=>toast('Файл',e.message))}
-function upD(){const roots=(S.config.local_folders||[]);const n=cur.replace(/[\\/]+$/,'');const k=Math.max(n.lastIndexOf('/'),n.lastIndexOf('\\'));const up=n.slice(0,k>0?k:0);loadD(up&&up.length>2?up:'')}
-function openCur(){if(cur)api('/api/open','POST',{path:cur}).catch(e=>toast('Папка',e.message));else toast('Файлы','Сначала откройте папку')}
 /* настройки */
 function drawer(o){$('dw').classList.toggle('on',!!o);if(o)fillCfg()}
-function fillCfg(){const c=S.config;if(!c.default_lead_minutes)return;$('nc').checked=c.notify_calendar;$('nm').checked=c.notify_mail;$('nl').value=c.default_lead_minutes;$('pc').value=c.calendar_poll_seconds;$('pm').value=c.mail_poll_seconds;$('fo').value=(c.local_folders||[]).join('\n')}
-async function saveCfg(){try{await api('/api/config','POST',{notify_calendar:$('nc').checked,notify_mail:$('nm').checked,default_lead_minutes:+$('nl').value,calendar_poll_seconds:+$('pc').value,mail_poll_seconds:+$('pm').value,local_folders:$('fo').value.split('\n').map(l=>l.trim()).filter(Boolean)});toast('Настройки','Сохранено ✓');drawer(0);poll();loadD()}catch(e){toast('Ошибка',e.message)}}
+function fillCfg(){const c=S.config;if(!c.default_lead_minutes)return;$('nc').checked=c.notify_calendar;$('nm').checked=c.notify_mail;$('nl').value=c.default_lead_minutes;$('pc').value=c.calendar_poll_seconds;$('pm').value=c.mail_poll_seconds}
+async function saveCfg(){try{await api('/api/config','POST',{notify_calendar:$('nc').checked,notify_mail:$('nm').checked,default_lead_minutes:+$('nl').value,calendar_poll_seconds:+$('pc').value,mail_poll_seconds:+$('pm').value});toast('Настройки','Сохранено ✓');drawer(0);poll()}catch(e){toast('Ошибка',e.message)}}
 async function upKey(i){const f=i.files[0];if(!f)return;try{await api('/api/key','POST',await f.text());toast('Google','Ключ загружен. Теперь нажмите «Подключить Google»');poll()}catch(e){toast('Ошибка',e.message)}}
 async function conn(){try{await api('/api/connect','POST');toast('Google','Открылся браузер — разрешите доступ')}catch(e){toast('Ошибка',e.message)}}
-async function refresh(){await api('/api/refresh','POST');setTimeout(()=>{poll();loadT();loadD()},800)}
+async function refresh(){await api('/api/refresh','POST');setTimeout(()=>{poll();loadT();loadProd()},800)}
 /* опрос */
 async function poll(){try{const s=await api('/api/state?since='+since),was=S.connected;S=s;
  s.alerts.forEach(a=>{since=Math.max(since,a.id);toast(a.title,a.text)});
@@ -161,5 +174,5 @@ async function poll(){try{const s=await api('/api/state?since='+since),was=S.con
   $('ma').textContent=s.mail_account?('● Подключено: '+s.mail_account):'○ Не подключено';$('gs').textContent=(s.connected?'● Подключено. ':'○ Не подключено. ')+(s.has_key?'Ключ загружен.':'Нужен файл credentials.json.')+(s.error?' Ошибка: '+s.error:'');
  if(!cfgLoaded&&s.config.default_lead_minutes){cfgLoaded=true;fillCfg()}
  drawCal();drawMail();}catch(e){$('cn').textContent='Нет связи с помощником'}}
-poll();loadT();loadD('');setInterval(poll,5000);setInterval(loadT,60000);
+poll();loadT();loadProd();setInterval(poll,5000);setInterval(loadT,60000);
 </script></html>

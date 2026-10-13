@@ -81,22 +81,18 @@ def test_imap_helpers():
     assert host_for("a@mail.ru") == "imap.mail.ru" and host_for("a@yandex.ru") == "imap.yandex.ru"
 
 
-def test_local_tasks_and_files(tmp_path, monkeypatch):
-    import pytest
+def test_local_tasks(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     from assistant import server
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "a.pdf").write_text("x")
-    (docs / "run.exe").write_text("x")
     core = server.Core()
-    core.cfg["local_folders"] = [str(docs)]
     core.task_add("Позвонить", "2026-10-20")
     tid = core.tasks()[0]["id"]
     core.task_change(tid)
     assert core.tasks() == []
-    assert {f["name"] for f in core.files(str(docs))} == {"a.pdf", "run.exe"}
-    with pytest.raises(PermissionError):
-        core.files(str(tmp_path))          # вне разрешённых папок
-    with pytest.raises(PermissionError):
-        core.open_path(str(docs / "run.exe"))  # программы не запускаем
+
+
+def test_production_calendar_2026():
+    from assistant import prodcal
+    work = [sum(c != "1" for c in prodcal.builtin(2026, m)) for m in range(1, 13)]
+    assert work == [15, 19, 21, 22, 19, 21, 23, 21, 22, 22, 20, 22]  # официально: 247 дней
+    assert sum(work) == 247

@@ -68,15 +68,54 @@ def stop_old() -> bool:
     return False
 
 
+class WindowApi:
+    """Кнопки окна без рамки (доступны странице как window.pywebview.api.*)."""
+
+    def __init__(self):
+        self.window = None
+        self._full = False
+
+    def minimize(self):
+        self.window.minimize()
+
+    def fullscreen(self):
+        self._full = not self._full
+        self.window.toggle_fullscreen()
+
+    def quit(self):
+        os._exit(0)
+
+
+def run_native_window() -> bool:
+    """Небольшое окно без верхней панели (pywebview). False — библиотека недоступна."""
+    try:
+        import webview
+    except Exception:
+        return False
+    api = WindowApi()
+    api.window = webview.create_window("Помощник", URL, js_api=api, width=480, height=800,
+                                       min_size=(380, 560), frameless=True, easy_drag=False,
+                                       background_color="#05060b")
+    webview.start()
+    return True
+
+
 def main():
     v = running_version()
     if v is not None:
         if v == VERSION or not stop_old():
             open_window()  # та же версия — просто открываем окно
             return
+    import threading
     core, srv = serve(PORT)
-    open_window()
-    srv.serve_forever()
+    if "--browser" in sys.argv:
+        open_window()
+        srv.serve_forever()
+        return
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    if not run_native_window():  # нет pywebview — окно приложения в Edge/Chrome
+        open_window()
+        srv.serve_forever()
 
 
 if __name__ == "__main__":
