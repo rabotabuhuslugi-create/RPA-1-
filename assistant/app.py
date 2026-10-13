@@ -13,7 +13,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from .server import serve
+from .server import VERSION, serve
 
 PORT = 8770
 URL = f"http://127.0.0.1:{PORT}/"
@@ -42,17 +42,38 @@ def open_window():
         webbrowser.open(URL)
 
 
-def running() -> bool:
+def running_version() -> str | None:
+    """Версия уже запущенного помощника (None — не запущен, "0" — старая версия без номера)."""
     try:
-        return urllib.request.urlopen(URL + "ping", timeout=1).status == 200
+        import json
+        data = json.loads(urllib.request.urlopen(URL + "ping", timeout=1).read())
+        return str(data.get("version", "0"))
     except Exception:
-        return False
+        return None
+
+
+def stop_old() -> bool:
+    """Останавливает старую копию помощника (нужен токен из .assistant_token этой же папки)."""
+    import time
+    try:
+        token = Path(".assistant_token").read_text().strip()
+        req = urllib.request.Request(URL + "api/quit", data=b"", method="POST", headers={"X-Token": token})
+        urllib.request.urlopen(req, timeout=2)
+    except Exception:
+        pass
+    for _ in range(20):
+        if running_version() is None:
+            return True
+        time.sleep(0.25)
+    return False
 
 
 def main():
-    if running():
-        open_window()
-        return
+    v = running_version()
+    if v is not None:
+        if v == VERSION or not stop_old():
+            open_window()  # та же версия — просто открываем окно
+            return
     core, srv = serve(PORT)
     open_window()
     srv.serve_forever()

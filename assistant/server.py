@@ -21,6 +21,7 @@ from .google_api import Google
 from .notifier import notify
 from .watcher import due_reminders, new_mail, reminder_text
 
+VERSION = "4"
 CONFIG_PATH = Path("assistant_config.yaml")
 TOKEN_PATH = Path(".assistant_token")
 EVENTS_PATH = Path("assistant_events.json")
@@ -327,7 +328,7 @@ def make_handler(core: Core):
             if u.path == "/favicon.ico":
                 return self._send(204, b"", "image/x-icon")
             if u.path == "/ping":
-                return self._send(200, {"ok": True})
+                return self._send(200, {"ok": True, "version": VERSION})
             if not self._auth():
                 return self._send(403, {"error": "forbidden"})
             q = parse_qs(u.query)
