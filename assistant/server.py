@@ -198,7 +198,14 @@ class Core:
         address = address.strip()
         if "@" not in address or not password:
             raise ValueError("Введите почту и пароль приложения")
-        imap_mail.fetch_unread(address, password, limit=1)  # проверка входа
+        try:
+            imap_mail.fetch_unread(address, password, limit=1)  # проверка входа
+        except Exception as ex:
+            text = str(ex)
+            if "AUTHENTICATIONFAILED" in text or "LOGIN failed" in text or "Invalid credentials" in text:
+                raise ValueError("Почта не приняла пароль. Нужен «пароль для внешних приложений» "
+                                 "(не обычный пароль) — см. подсказку под кнопкой.") from None
+            raise ValueError(f"Не удалось подключиться: {text}") from None
         MAIL_PATH.write_text(json.dumps({"email": address, "password": password}), encoding="utf-8")
         try:
             MAIL_PATH.chmod(0o600)
