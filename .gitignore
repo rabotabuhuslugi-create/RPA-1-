@@ -10,3 +10,4 @@ credentials.json
 token.json
 assistant_config.yaml
 .assistant_token
+assistant_events.json

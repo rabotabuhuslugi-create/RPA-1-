@@ -58,3 +58,18 @@ def test_server_auth_and_config(tmp_path, monkeypatch):
     assert core.cfg["drive_folders"] == [{"name": "A", "id": "ok-1"}]
     assert call("/api/key", "POST", b'{"x": 1}') == 500
     srv.shutdown()
+
+
+def test_local_calendar_reminder(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from assistant import server
+    core = server.Core()
+    soon = dt.datetime.now() + dt.timedelta(minutes=5)
+    core.add_event({"title": "Тест", "date": soon.date().isoformat(), "time": soon.strftime("%H:%M")})
+    core.add_event({"title": "Без времени", "date": soon.date().isoformat()})
+    assert len(server.load_local()) == 2  # сохранено на диск
+    core.rebuild()
+    due = due_reminders(core.events, dt.datetime.now(dt.timezone.utc), 10, set())
+    assert [e["summary"] for e, _ in due] == ["Тест"]
+    core.delete_event(core.local[0]["id"])
+    assert len(server.load_local()) == 1

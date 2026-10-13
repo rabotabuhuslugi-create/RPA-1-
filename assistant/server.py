@@ -19,6 +19,7 @@ from .watcher import due_reminders, new_mail, reminder_text
 
 CONFIG_PATH = Path("assistant_config.yaml")
 TOKEN_PATH = Path(".assistant_token")
+EVENTS_PATH = Path("assistant_events.json")
 WEB = Path(__file__).parent / "web"
 DEFAULTS = {
     "credentials_file": "credentials.json", "token_file": "token.json",
@@ -43,12 +44,34 @@ def get_token() -> str:
     return t
 
 
+def load_local() -> list[dict]:
+    if EVENTS_PATH.exists():
+        try:
+            return json.loads(EVENTS_PATH.read_text(encoding="utf-8"))
+        except ValueError:
+            return []
+    return []
+
+
+def local_to_event(e: dict) -> dict:
+    """Запись своего календаря -> тот же вид, что у событий Google."""
+    if e.get("all_day"):
+        start = dt.datetime.combine(dt.date.fromisoformat(e["date"]), dt.time.min).astimezone()
+    else:
+        start = dt.datetime.fromisoformat(f"{e['date']}T{e.get('time') or '09:00'}").astimezone()
+    lead = e.get("lead")
+    return {"id": e["id"], "summary": e["title"], "start": start, "all_day": bool(e.get("all_day")),
+            "leads": [int(lead)] if lead not in (None, "") else [], "use_default": lead in (None, ""),
+            "location": e.get("location", ""), "link": "", "local": True}
+
+
 class Core:
     def __init__(self):
         self.cfg = load_config()
         self.token = get_token()
         self.g = Google(self.cfg["credentials_file"], self.cfg["token_file"])
-        self.events, self.mail, self.alerts = [], [], []
+        self.google_events, self.events, self.mail, self.alerts = [], [], [], []
+        self.local = load_local()
         self.seen_rem, self.seen_mail, self.mail_first = set(), set(), True
         self.error, self.connecting = "", False
         self.wake = threading.Event()
@@ -63,20 +86,49 @@ class Core:
         if not notify(title, text):
             pass  # страница всё равно покажет карточку-уведомление
 
+    def rebuild(self):
+        mine = [local_to_event(e) for e in self.local]
+        self.events = sorted(self.google_events + mine, key=lambda e: e["start"])
+
     def _calendar_loop(self):
         while True:
             if self.g.connected():
                 try:
-                    evs = self.g.events(days=int(self.cfg["events_days_ahead"]))
-                    if self.cfg["notify_calendar"]:
-                        for e, left in due_reminders(evs, dt.datetime.now(dt.timezone.utc),
-                                                     int(self.cfg["default_lead_minutes"]), self.seen_rem):
-                            self.alert("Календарь", reminder_text(e, left))
-                    self.events, self.error = evs, ""
+                    self.google_events = self.g.events(days=int(self.cfg["events_days_ahead"]))
+                    self.error = ""
                 except Exception as ex:
                     self.error = str(ex)
-            self.wake.wait(int(self.cfg["calendar_poll_seconds"]) if self.g.connected() else 3)
+            self.rebuild()
+            if self.cfg["notify_calendar"]:
+                for e, left in due_reminders(self.events, dt.datetime.now(dt.timezone.utc),
+                                             int(self.cfg["default_lead_minutes"]), self.seen_rem):
+                    self.alert("Календарь", reminder_text(e, left))
+            self.wake.wait(min(int(self.cfg["calendar_poll_seconds"]), 30) if not self.g.connected()
+                           else int(self.cfg["calendar_poll_seconds"]))
             self.wake.clear()
+
+    def add_event(self, d: dict):
+        title = str(d.get("title", "")).strip()[:200]
+        if not title:
+            raise ValueError("Введите название")
+        dt.date.fromisoformat(d["date"])
+        if d.get("time"):
+            dt.time.fromisoformat(d["time"])
+        lead = d.get("lead")
+        ev = {"id": "L" + secrets.token_hex(5), "title": title, "date": d["date"],
+              "time": d.get("time") or "", "all_day": bool(d.get("all_day")) or not d.get("time"),
+              "location": str(d.get("location", ""))[:200],
+              "lead": int(lead) if lead not in (None, "") else None}
+        self.local.append(ev)
+        self._save_local()
+
+    def delete_event(self, eid: str):
+        self.local = [e for e in self.local if e["id"] != eid]
+        self._save_local()
+
+    def _save_local(self):
+        EVENTS_PATH.write_text(json.dumps(self.local, ensure_ascii=False, indent=1), encoding="utf-8")
+        self.rebuild()
 
     def _mail_loop(self):
         while True:
@@ -98,7 +150,8 @@ class Core:
             "connected": self.g.connected(), "connecting": self.connecting,
             "has_key": Path(self.cfg["credentials_file"]).exists(), "error": self.error,
             "events": [{"id": e["id"], "title": e["summary"], "start": e["start"].isoformat(),
-                        "all_day": e["all_day"], "link": e["link"], "location": e["location"]} for e in self.events],
+                        "all_day": e["all_day"], "link": e["link"], "location": e["location"],
+                        "local": bool(e.get("local"))} for e in self.events],
             "mail": self.mail, "alerts": [a for a in self.alerts if a["id"] > since],
             "config": {k: self.cfg[k] for k in EDITABLE} | {"drive_folders": self.cfg["drive_folders"]},
         }
@@ -202,6 +255,10 @@ def make_handler(core: Core):
                     core.save_config(json.loads(raw))
                 elif p == "/api/notify-test":
                     core.alert("Помощник", "Уведомления работают ✨")
+                elif p == "/api/events":
+                    core.add_event(json.loads(raw))
+                elif p == "/api/events/delete":
+                    core.delete_event(str(json.loads(raw)["id"]))
                 elif p == "/api/tasks":
                     d = json.loads(raw)
                     due = dt.date.fromisoformat(d["due"]) if d.get("due") else None

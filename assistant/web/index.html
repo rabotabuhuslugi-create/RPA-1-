@@ -45,7 +45,7 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
 .mi div{min-width:0}.mi b,.mi small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi small{color:var(--mut)}
 .badge{background:linear-gradient(135deg,var(--b1),var(--b2));padding:2px 10px;border-radius:99px;font-size:13px;font-weight:700;margin-left:8px}
 .empty{color:var(--mut);text-align:center;padding:30px 10px}
-.hero{position:fixed;inset:0;display:none;place-items:center;background:#05060bd9;backdrop-filter:blur(8px);z-index:5}.hero.on{display:grid}
+.hero{position:fixed;inset:0;display:none;place-items:center;background:#05060bd9;backdrop-filter:blur(8px);z-index:5}.hero.on{display:grid}.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:#3b82f633;color:#93c5fd;margin-left:6px;font-weight:600}.ev .x{margin-left:auto;opacity:0;cursor:pointer}.ev:hover .x{opacity:.7}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:rgba(12,14,24,.92);backdrop-filter:blur(30px);border-left:1px solid var(--ln);padding:26px;transform:translateX(105%);transition:.35s cubic-bezier(.2,.8,.2,1);z-index:6;overflow:auto}.drawer.on{transform:none}
 .drawer h3{margin:22px 0 8px;font-size:12px;letter-spacing:.14em;color:var(--b3)}.drawer label{display:flex;align-items:center;gap:10px;padding:7px 0;color:var(--ink)}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.steps{color:var(--mut);font-size:13px}.steps li{margin:3px 0}
@@ -61,7 +61,7 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
  <button class="btn" onclick="refresh()">⟳ Обновить</button><button class="btn" onclick="fs()">⛶</button><button class="btn p" onclick="drawer(1)">⚙ Настройки</button>
 </header>
 <main>
- <section class="card cal" style="--g:#3b82f6"><div class="hd"><div class="ic">📅</div><div><h2>Календарь</h2><small id="evc"></small></div><button class="btn sm" onclick="window.open('https://calendar.google.com')">Открыть ↗</button></div>
+ <section class="card cal" style="--g:#3b82f6"><div class="hd"><div class="ic">📅</div><div><h2>Календарь</h2><small id="evc"></small></div><button class="btn p sm" onclick="evm(1)">＋ Событие</button></div>
   <div class="mn"><button class="btn sm" onclick="mv(-1)">◀</button><b id="mt"></b><div><button class="btn sm" onclick="goto()">Сегодня</button><button class="btn sm" onclick="mv(1)">▶</button></div></div>
   <div class="mg" id="mg"></div><div class="body" id="evl" style="margin-top:14px"></div></section>
  <section class="card" style="--g:#6366f1"><div class="hd"><div class="ic">✅</div><div><h2>Задачи</h2><small id="tc"></small></div></div>
@@ -70,11 +70,18 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
  <section class="card" style="--g:#818cf8"><div class="hd"><div class="ic">📁</div><div><h2>Google Диск</h2><small id="dc"></small></div><button class="btn sm" onclick="window.open('https://drive.google.com')">Открыть ↗</button></div><div class="crumb" id="cr"></div><div class="body"><div class="tiles" id="dr"></div></div></section>
 </main>
 
-<div class="hero" id="hero"><div class="card" style="max-width:480px;text-align:center;align-items:center;gap:14px;--g:#6366f1"><div class="logo" style="width:84px;height:84px;font-size:44px;border-radius:28px;background:linear-gradient(135deg,#3b82f6,#6366f1)">✺</div><h2 style="margin:0;font-size:28px">Подключите Google</h2><p style="color:var(--mut);margin:0">Один вход — календарь, задачи, диск и Gmail. Уведомления придут сами.</p><button class="btn p" onclick="drawer(1)">⚙ Открыть настройки</button></div></div>
+<div class="hero" id="evm"><div class="card" style="width:min(460px,92vw);gap:12px;--g:#3b82f6">
+ <div class="hd"><div class="ic">📅</div><div><h2>Новое событие</h2><small>Сохраняется на этом компьютере</small></div></div>
+ <input id="et" placeholder="Название" onkeydown="if(event.key=='Enter')saveEv()">
+ <div style="display:flex;gap:8px"><input id="ed" type="date" style="flex:1"><input id="etm" type="time" style="flex:1"></div>
+ <input id="el" placeholder="Место (необязательно)">
+ <label style="display:flex;gap:8px;align-items:center;color:var(--mut)">Напомнить за <input id="er" type="number" min="0" placeholder="по умолч." style="width:100px"> мин</label>
+ <div style="color:var(--mut);font-size:12px">Без времени — событие на весь день.</div>
+ <div class="row" style="margin:6px 0 0"><button class="btn p" onclick="saveEv()">Сохранить</button><button class="btn" onclick="evm(0)">Отмена</button></div></div></div>
 
 <aside class="drawer" id="dw">
  <div style="display:flex;align-items:center"><h2 style="margin:0;font-size:24px">Настройки</h2><button class="btn sm" style="margin-left:auto" onclick="drawer(0)">✕</button></div>
- <h3>ПОДКЛЮЧЕНИЕ GOOGLE</h3><div id="gs" style="color:var(--mut)"></div>
+ <p style="color:var(--mut);font-size:13px">Календарь работает и без Google — события хранятся на этом компьютере. Google нужен для задач, диска и почты (и по желанию показывает свои события календаря).</p><h3>ПОДКЛЮЧЕНИЕ GOOGLE (необязательно)</h3><div id="gs" style="color:var(--mut)"></div>
  <ol class="steps"><li>Скачайте OAuth-ключ (см. assistant/README.md)</li><li>Загрузите файл ниже</li><li>Нажмите «Подключить» и разрешите доступ</li></ol>
  <div class="row"><label class="btn sm" style="cursor:pointer">1. Загрузить credentials.json<input type="file" accept=".json" id="kf" hidden onchange="upKey(this)"></label><button class="btn p sm" onclick="conn()">2. Подключить Google</button><button class="btn sm" onclick="api('/api/disconnect','POST').then(poll)">Отключить</button></div>
  <p style="color:var(--mut);font-size:13px">Gmail входит в тот же доступ — отдельный пароль почты не нужен.</p>
@@ -107,17 +114,21 @@ function drawCal(){$('mt').textContent=`${MN[month.getMonth()]} ${month.getFullY
  $('mg').innerHTML=h;drawEv()}
 function pickD(k){sel=sel==k?null:k;drawCal()}
 function drawEv(){const now=Date.now();let l=S.events.filter(e=>!sel||key(new Date(e.start))==sel);$('evc').textContent=`Событий: ${S.events.length}`;
- $('evl').innerHTML=l.length?l.map(e=>{const d=new Date(e.start);return`<div class="ev ${Math.abs(d-now)<36e5&&!e.all_day?'now':''}" onclick="window.open('${esc(e.link)}')"><div class="tm">${e.all_day?'весь день':pad(d.getHours())+':'+pad(d.getMinutes())}<div class="dd">${pad(d.getDate())}.${pad(d.getMonth()+1)}</div></div><div><b>${esc(e.title)}</b>${e.location?`<div class="dd">📍 ${esc(e.location)}</div>`:''}</div></div>`}).join(''):'<div class="empty">Нет событий ✨</div>'}
+ $('evl').innerHTML=l.length?l.map(e=>{const d=new Date(e.start);return`<div class="ev ${Math.abs(d-now)<36e5&&!e.all_day?'now':''}" onclick="${e.local?'':`window.open('${esc(e.link)}')`}"><div class="tm">${e.all_day?'весь день':pad(d.getHours())+':'+pad(d.getMinutes())}<div class="dd">${pad(d.getDate())}.${pad(d.getMonth()+1)}</div></div><div><b>${esc(e.title)}</b>${e.local?'':'<span class="tag">Google</span>'}${e.location?`<div class="dd">📍 ${esc(e.location)}</div>`:''}</div>${e.local?`<div class="x" onclick="event.stopPropagation();delEv('${e.id}')">🗑</div>`:''}</div>`}).join(''):'<div class="empty">Нет событий ✨<br><small>Нажмите «＋ Событие», чтобы добавить</small></div>'}
+function evm(o){$('evm').classList.toggle('on',!!o);if(o){$('ed').value=sel||key(new Date());$('et').value='';$('etm').value='';$('el').value='';$('er').value='';setTimeout(()=>$('et').focus(),50)}}
+async function saveEv(){try{await api('/api/events','POST',{title:$('et').value,date:$('ed').value,time:$('etm').value,location:$('el').value,lead:$('er').value});evm(0);await api('/api/refresh','POST');setTimeout(poll,600);toast('Календарь','Событие добавлено ✓')}catch(e){toast('Ошибка',e.message)}}
+async function delEv(id){if(confirm('Удалить событие?')){await api('/api/events/delete','POST',{id});await api('/api/refresh','POST');setTimeout(poll,600)}}
 /* почта */
-function drawMail(){$('mb').textContent=S.mail.length;$('ml').innerHTML=S.mail.length?S.mail.map(m=>{const n=(m.from.split('<')[0].trim()||m.from);return`<div class="mi" onclick="window.open('https://mail.google.com')"><div class="av">${esc(n[0]||'?').toUpperCase()}</div><div><b>${esc(n)}</b><span>${esc(m.subject)}</span><small>${esc(m.snippet)}</small></div></div>`}).join(''):'<div class="empty">Всё прочитано 🎉</div>'}
+function drawMail(){if(!S.connected){$('mb').textContent=0;$('ml').innerHTML=NC;return}$('mb').textContent=S.mail.length;$('ml').innerHTML=S.mail.length?S.mail.map(m=>{const n=(m.from.split('<')[0].trim()||m.from);return`<div class="mi" onclick="window.open('https://mail.google.com')"><div class="av">${esc(n[0]||'?').toUpperCase()}</div><div><b>${esc(n)}</b><span>${esc(m.subject)}</span><small>${esc(m.snippet)}</small></div></div>`}).join(''):'<div class="empty">Всё прочитано 🎉</div>'}
 /* задачи */
-async function loadT(){if(!S.connected)return;try{const t=await api('/api/tasks');$('tc').textContent=`Осталось: ${t.length}`;
+const NC='<div class="empty">Подключите Google в ⚙ Настройках</div>';
+async function loadT(){if(!S.connected){$('tl').innerHTML=NC;return}try{const t=await api('/api/tasks');$('tc').textContent=`Осталось: ${t.length}`;
  $('tl').innerHTML=t.length?t.map(x=>`<div class="tk" id="k${x.id}"><div class="ck" onclick="done('${x.id}')"></div><span>${esc(x.title)}</span>${x.due?`<small>${x.due.split('-').reverse().slice(0,2).join('.')}</small>`:''}<div class="del" onclick="delT('${x.id}')">🗑</div></div>`).join(''):'<div class="empty">Задач нет — отдыхайте 🌴</div>'}catch(e){toast('Задачи',e.message)}}
 async function addT(){const t=$('ti').value.trim();if(!t)return;$('ti').value='';await api('/api/tasks','POST',{title:t,due:$('td').value});$('td').value='';loadT()}
 async function done(id){const e=$('k'+id);e&&e.classList.add('x');await api('/api/tasks/done','POST',{id});setTimeout(loadT,450)}
 async function delT(id){if(confirm('Удалить задачу?')){await api('/api/tasks/delete','POST',{id});loadT()}}
 /* диск */
-async function loadD(){if(!S.connected)return;$('cr').innerHTML=stack.map((s,i)=>`<a style="cursor:pointer;color:${i==stack.length-1?'var(--ink)':'var(--b3)'}" onclick="crumb(${i})">${esc(s[0])}</a>`).join(' › ');
+async function loadD(){if(!S.connected){$('dr').innerHTML=NC.replace('class="empty"','class="empty" style="grid-column:1/-1"');return}$('cr').innerHTML=stack.map((s,i)=>`<a style="cursor:pointer;color:${i==stack.length-1?'var(--ink)':'var(--b3)'}" onclick="crumb(${i})">${esc(s[0])}</a>`).join(' › ');
  const pins=(S.config.drive_folders||[]).map(f=>`<div class="tile" onclick="pin('${esc(f.id)}','${esc(f.name)}')"><i>⭐</i><b>${esc(f.name)}</b></div>`).join('');
  try{const it=await api('/api/drive?folder='+stack[stack.length-1][1]);$('dc').textContent=`Элементов: ${it.length}`;
  $('dr').innerHTML=(stack.length==1?pins:'')+it.map(f=>`<div class="tile" onclick="${f.folder?`openF('${f.id}','${esc(f.name).replace(/'/g,'')}')`:`window.open('${esc(f.link)}')`}"><i>${f.folder?'📁':'📄'}</i><b>${esc(f.name)}</b></div>`).join('')}catch(e){toast('Диск',e.message)}}
@@ -132,10 +143,9 @@ async function refresh(){await api('/api/refresh','POST');setTimeout(()=>{poll()
 /* опрос */
 async function poll(){try{const s=await api('/api/state?since='+since),was=S.connected;S=s;
  s.alerts.forEach(a=>{since=Math.max(since,a.id);toast(a.title,a.text)});
- $('dot').className='dot'+(s.connected?' on':'');$('cn').textContent=s.connected?'Google подключён':(s.connecting?'Подключаем…':'Google не подключён');
- $('hero').classList.toggle('on',!s.connected&&!$('dw').classList.contains('on'));
- $('gs').textContent=(s.connected?'● Подключено. ':'○ Не подключено. ')+(s.has_key?'Ключ загружен.':'Нужен файл credentials.json.')+(s.error?' Ошибка: '+s.error:'');
+ $('dot').className='dot'+(s.connected?' on':'');$('cn').textContent=s.connected?'Google подключён':(s.connecting?'Подключаем…':'Свой календарь · Google не подключён');
+  $('gs').textContent=(s.connected?'● Подключено. ':'○ Не подключено. ')+(s.has_key?'Ключ загружен.':'Нужен файл credentials.json.')+(s.error?' Ошибка: '+s.error:'');
  if(!cfgLoaded&&s.config.default_lead_minutes){cfgLoaded=true;fillCfg()}
  drawCal();drawMail();if(s.connected&&!was){loadT();loadD()}}catch(e){$('cn').textContent='Нет связи с помощником'}}
-poll();setInterval(poll,5000);setInterval(loadT,60000);
+poll();loadT();loadD();setInterval(poll,5000);setInterval(loadT,60000);
 </script></html>
