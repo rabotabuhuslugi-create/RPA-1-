@@ -6,3 +6,6 @@ errors/
 .venv/
 debug/
 state/
+credentials.json
+token.json
+assistant_config.yaml
