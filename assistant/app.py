@@ -33,8 +33,8 @@ MONTHS = ["Январь", "Февраль", "Март", "Апрель", "Май"
           "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
 
-BG, CARD, ACCENT, INK, MUTED = "#f6efe4", "#fffaf2", "#d4694a", "#1f1f1f", "#7a6f62"
-TAB_COLORS = {"Календарь": "#f4c9b8", "Задачи": "#f7e0a8", "Диск": "#cfe3c4", "Почта": "#c9dcee"}
+BG, CARD, ACCENT, INK, MUTED = "#0a0a0f", "#14161d", "#3b82f6", "#e8eefc", "#8793ab"
+TAB_COLORS = {"Календарь": "#1d4ed8", "Задачи": "#2563eb", "Диск": "#3b82f6", "Почта": "#60a5fa"}
 
 
 def apply_theme(root):
@@ -51,16 +51,16 @@ def apply_theme(root):
     st.configure("Month.TLabel", font=("Segoe UI", 13, "bold"), background=CARD)
     st.configure("TButton", background=ACCENT, foreground="white", borderwidth=0,
                  padding=(12, 6), font=("Segoe UI", 10, "bold"))
-    st.map("TButton", background=[("active", "#b9573a")])
-    st.configure("TEntry", fieldbackground=CARD, padding=5)
+    st.map("TButton", background=[("active", "#2563eb")])
+    st.configure("TEntry", fieldbackground=CARD, foreground=INK, insertcolor=INK, padding=5)
     st.configure("TNotebook", background=BG, borderwidth=0, tabmargins=(0, 4, 0, 0))
-    st.configure("TNotebook.Tab", background="#e8dccb", foreground=INK, padding=(18, 8),
+    st.configure("TNotebook.Tab", background="#1a1d27", foreground=INK, padding=(18, 8),
                  font=("Segoe UI", 10, "bold"), borderwidth=0)
     st.map("TNotebook.Tab", background=[("selected", ACCENT)], foreground=[("selected", "white")])
     st.configure("Treeview", background=CARD, fieldbackground=CARD, rowheight=28, borderwidth=0)
-    st.configure("Treeview.Heading", background="#ecdcc4", foreground=INK,
+    st.configure("Treeview.Heading", background="#1e2a4a", foreground=INK,
                  font=("Segoe UI", 10, "bold"), relief="flat", padding=5)
-    st.map("Treeview", background=[("selected", "#f4c9b8")], foreground=[("selected", INK)])
+    st.map("Treeview", background=[("selected", "#1e3a8a")], foreground=[("selected", "white")])
 
 
 def load_config(path="assistant_config.yaml") -> dict:
