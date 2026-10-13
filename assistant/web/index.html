@@ -1,0 +1,141 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Помощник</title>
+<style>
+:root{--bg:#05060b;--ink:#eef3ff;--mut:#8a94b3;--b1:#3b82f6;--b2:#6366f1;--b3:#22d3ee;--glass:rgba(255,255,255,.045);--ln:rgba(255,255,255,.09)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 Inter,"Segoe UI Variable","Segoe UI",system-ui,sans-serif;overflow:hidden;display:flex;flex-direction:column;padding:20px 24px;gap:18px}
+.blob{position:fixed;border-radius:50%;filter:blur(110px);opacity:.5;z-index:-1;animation:fl 18s ease-in-out infinite alternate}
+.b1{width:520px;height:520px;background:#2563eb;left:-120px;top:-140px}.b2{width:480px;height:480px;background:#6d28d9;right:-100px;top:20%;animation-delay:-6s}.b3{width:420px;height:420px;background:#0891b2;left:35%;bottom:-200px;animation-delay:-12s}
+@keyframes fl{to{transform:translate(60px,40px) scale(1.15)}}
+header{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}.logo{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;font-size:28px;background:linear-gradient(135deg,var(--b1),var(--b2));box-shadow:0 0 36px #3b82f688}
+.brand h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.01em}.pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--mut)}.dot{width:8px;height:8px;border-radius:50%;background:#64748b}.dot.on{background:#22d3ee;box-shadow:0 0 10px #22d3ee}
+.clock{margin:0 auto;text-align:center}.clock b{display:block;font-size:clamp(44px,6vw,76px);font-weight:200;letter-spacing:-.02em;line-height:1;background:linear-gradient(180deg,#fff,#9db8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.clock span{color:var(--b3);font-weight:600;letter-spacing:.04em}
+.btn{border:1px solid var(--ln);background:var(--glass);color:var(--ink);padding:11px 18px;border-radius:14px;font:600 14px inherit;font-family:inherit;cursor:pointer;backdrop-filter:blur(14px);transition:.2s}
+.btn:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}.btn.p{background:linear-gradient(135deg,var(--b1),var(--b2));border:0;box-shadow:0 8px 28px #4f46e555}.btn.p:hover{box-shadow:0 10px 36px #4f46e588}.btn.sm{padding:7px 12px;font-size:13px}
+main{flex:1;min-height:0;display:grid;gap:18px;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:1fr 1fr}
+.card{position:relative;background:var(--glass);border:1px solid var(--ln);border-radius:28px;padding:20px;display:flex;flex-direction:column;min-height:0;backdrop-filter:blur(26px);box-shadow:0 20px 60px #0006,inset 0 1px 0 #ffffff14;transition:.25s}
+.card:hover{border-color:#ffffff22;transform:translateY(-2px)}
+.card:before{content:"";position:absolute;inset:0;border-radius:28px;background:radial-gradient(500px 160px at 0 0,var(--g,#3b82f6)22,transparent);pointer-events:none}
+.cal{grid-row:1/3}.mail{grid-row:1/3;grid-column:3}
+.hd{display:flex;align-items:center;gap:14px;margin-bottom:14px;position:relative}
+.ic{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,var(--g,#3b82f6),#0003);box-shadow:0 8px 24px color-mix(in srgb,var(--g) 45%,transparent)}
+.hd h2{margin:0;font-size:22px;font-weight:800}.hd small{color:var(--mut);display:block;font-size:13px}.hd .btn{margin-left:auto}
+.body{flex:1;overflow:auto;min-height:0;position:relative}.body::-webkit-scrollbar{width:6px}.body::-webkit-scrollbar-thumb{background:#ffffff22;border-radius:9px}
+.mn{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.mn b{font-size:19px}.mn div{display:flex;gap:6px}
+.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.mg i{font-style:normal;text-align:center;color:var(--mut);font-size:12px;font-weight:600;padding-bottom:2px}
+.d{aspect-ratio:1.15;border-radius:14px;display:grid;place-items:center;position:relative;cursor:pointer;font-weight:600;transition:.15s;background:#ffffff08}.d:hover{background:#ffffff18}
+.d.e:after{content:"";position:absolute;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--b3);box-shadow:0 0 8px var(--b3)}
+.d.t{background:linear-gradient(135deg,var(--b1),var(--b2));box-shadow:0 6px 22px #4f46e566;color:#fff}.d.s{outline:2px solid var(--b3)}.d.o{opacity:.25}
+.ev{display:flex;gap:12px;align-items:center;padding:11px 12px;border-radius:16px;cursor:pointer;transition:.15s}.ev:hover{background:#ffffff10}
+.ev .tm{min-width:62px;font-weight:700;color:var(--b3);font-variant-numeric:tabular-nums}.ev .dd{color:var(--mut);font-size:12px}
+.ev.now{background:linear-gradient(90deg,#3b82f633,transparent)}
+.add{display:flex;gap:8px;margin-bottom:10px}
+input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);padding:12px 14px;border-radius:14px;font:inherit;outline:0;transition:.15s}input:focus,textarea:focus{border-color:var(--b1);box-shadow:0 0 0 3px #3b82f633}
+.tk{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:16px;transition:.15s}.tk:hover{background:#ffffff10}
+.ck{width:26px;height:26px;border-radius:9px;border:2px solid #ffffff44;cursor:pointer;flex:none;display:grid;place-items:center;transition:.2s}.ck:hover{border-color:var(--b3);background:#22d3ee22}.tk.x{animation:out .5s forwards}
+@keyframes out{to{opacity:0;transform:translateX(30px);height:0;padding:0}}
+.tk span{flex:1}.tk small{color:var(--mut)}.tk .del{opacity:0;cursor:pointer}.tk:hover .del{opacity:.7}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.tile{padding:14px;border-radius:18px;background:#ffffff0a;border:1px solid transparent;cursor:pointer;transition:.18s;display:flex;flex-direction:column;gap:6px}.tile:hover{background:#ffffff16;border-color:var(--ln);transform:translateY(-2px)}
+.tile i{font-style:normal;font-size:34px}.tile b{font-size:13px;font-weight:600;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.crumb{display:flex;gap:8px;align-items:center;margin-bottom:10px;color:var(--mut);font-size:13px}
+.mi{display:flex;gap:12px;padding:12px;border-radius:16px;cursor:pointer;transition:.15s}.mi:hover{background:#ffffff10}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;flex:none;background:linear-gradient(135deg,#22d3ee,#6366f1)}
+.mi div{min-width:0}.mi b,.mi small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi small{color:var(--mut)}
+.badge{background:linear-gradient(135deg,var(--b1),var(--b2));padding:2px 10px;border-radius:99px;font-size:13px;font-weight:700;margin-left:8px}
+.empty{color:var(--mut);text-align:center;padding:30px 10px}
+.hero{position:fixed;inset:0;display:none;place-items:center;background:#05060bd9;backdrop-filter:blur(8px);z-index:5}.hero.on{display:grid}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:rgba(12,14,24,.92);backdrop-filter:blur(30px);border-left:1px solid var(--ln);padding:26px;transform:translateX(105%);transition:.35s cubic-bezier(.2,.8,.2,1);z-index:6;overflow:auto}.drawer.on{transform:none}
+.drawer h3{margin:22px 0 8px;font-size:12px;letter-spacing:.14em;color:var(--b3)}.drawer label{display:flex;align-items:center;gap:10px;padding:7px 0;color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.steps{color:var(--mut);font-size:13px}.steps li{margin:3px 0}
+.toasts{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:9}
+.toast{background:rgba(20,24,44,.95);border:1px solid #3b82f655;border-radius:18px;padding:14px 18px;width:330px;box-shadow:0 12px 40px #000a,0 0 30px #3b82f633;animation:in .4s}
+@keyframes in{from{opacity:0;transform:translateY(20px) scale(.96)}}.toast small{color:var(--b3);font-weight:700}
+@media(max-width:1000px){body{overflow:auto}main{grid-template-columns:1fr}.cal,.mail{grid-row:auto;grid-column:auto}.card{min-height:420px}}
+</style>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<header>
+ <div class="brand"><div class="logo">✺</div><div><h1>Мой помощник</h1><span class="pill"><i class="dot" id="dot"></i><span id="cn">Google не подключён</span></span></div></div>
+ <div class="clock"><b id="t">--:--</b><span id="dt"></span></div>
+ <button class="btn" onclick="refresh()">⟳ Обновить</button><button class="btn" onclick="fs()">⛶</button><button class="btn p" onclick="drawer(1)">⚙ Настройки</button>
+</header>
+<main>
+ <section class="card cal" style="--g:#3b82f6"><div class="hd"><div class="ic">📅</div><div><h2>Календарь</h2><small id="evc"></small></div><button class="btn sm" onclick="window.open('https://calendar.google.com')">Открыть ↗</button></div>
+  <div class="mn"><button class="btn sm" onclick="mv(-1)">◀</button><b id="mt"></b><div><button class="btn sm" onclick="goto()">Сегодня</button><button class="btn sm" onclick="mv(1)">▶</button></div></div>
+  <div class="mg" id="mg"></div><div class="body" id="evl" style="margin-top:14px"></div></section>
+ <section class="card" style="--g:#6366f1"><div class="hd"><div class="ic">✅</div><div><h2>Задачи</h2><small id="tc"></small></div></div>
+  <div class="add"><input id="ti" placeholder="Что нужно сделать?" style="flex:1" onkeydown="if(event.key=='Enter')addT()"><input id="td" type="date" style="width:150px"><button class="btn p" onclick="addT()">＋</button></div><div class="body" id="tl"></div></section>
+ <section class="card mail" style="--g:#22d3ee"><div class="hd"><div class="ic">✉️</div><div><h2>Почта<span class="badge" id="mb">0</span></h2><small>Непрочитанные</small></div><button class="btn sm" onclick="window.open('https://mail.google.com')">Gmail ↗</button></div><div class="body" id="ml"></div></section>
+ <section class="card" style="--g:#818cf8"><div class="hd"><div class="ic">📁</div><div><h2>Google Диск</h2><small id="dc"></small></div><button class="btn sm" onclick="window.open('https://drive.google.com')">Открыть ↗</button></div><div class="crumb" id="cr"></div><div class="body"><div class="tiles" id="dr"></div></div></section>
+</main>
+
+<div class="hero" id="hero"><div class="card" style="max-width:480px;text-align:center;align-items:center;gap:14px;--g:#6366f1"><div class="logo" style="width:84px;height:84px;font-size:44px;border-radius:28px;background:linear-gradient(135deg,#3b82f6,#6366f1)">✺</div><h2 style="margin:0;font-size:28px">Подключите Google</h2><p style="color:var(--mut);margin:0">Один вход — календарь, задачи, диск и Gmail. Уведомления придут сами.</p><button class="btn p" onclick="drawer(1)">⚙ Открыть настройки</button></div></div>
+
+<aside class="drawer" id="dw">
+ <div style="display:flex;align-items:center"><h2 style="margin:0;font-size:24px">Настройки</h2><button class="btn sm" style="margin-left:auto" onclick="drawer(0)">✕</button></div>
+ <h3>ПОДКЛЮЧЕНИЕ GOOGLE</h3><div id="gs" style="color:var(--mut)"></div>
+ <ol class="steps"><li>Скачайте OAuth-ключ (см. assistant/README.md)</li><li>Загрузите файл ниже</li><li>Нажмите «Подключить» и разрешите доступ</li></ol>
+ <div class="row"><label class="btn sm" style="cursor:pointer">1. Загрузить credentials.json<input type="file" accept=".json" id="kf" hidden onchange="upKey(this)"></label><button class="btn p sm" onclick="conn()">2. Подключить Google</button><button class="btn sm" onclick="api('/api/disconnect','POST').then(poll)">Отключить</button></div>
+ <p style="color:var(--mut);font-size:13px">Gmail входит в тот же доступ — отдельный пароль почты не нужен.</p>
+ <h3>УВЕДОМЛЕНИЯ</h3>
+ <label><input type="checkbox" id="nc"> Напоминания о событиях</label><label><input type="checkbox" id="nm"> Новые письма</label>
+ <label>Предупреждать за <input id="nl" type="number" min="1" style="width:80px"> мин</label>
+ <label>Проверять календарь / почту каждые <input id="pc" type="number" min="5" style="width:70px"> / <input id="pm" type="number" min="10" style="width:70px"> сек</label>
+ <h3>БЫСТРЫЕ ПАПКИ ДИСКА</h3><textarea id="fo" rows="4" style="width:100%" placeholder="Название|id папки (по строке)"></textarea>
+ <div class="row" style="margin-top:18px"><button class="btn p" onclick="saveCfg()">Сохранить</button><button class="btn" onclick="api('/api/notify-test','POST')">🔔 Проверить уведомление</button><button class="btn" onclick="if(confirm('Закрыть помощника? Уведомления прекратятся.'))api('/api/quit','POST').then(()=>window.close())">Выйти</button></div>
+</aside>
+<div class="toasts" id="ts"></div>
+<script>
+const TOKEN="__TOKEN__",$=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(p,m='GET',b){const r=await fetch(p,{method:m,headers:{'X-Token':TOKEN},body:b==null?undefined:(typeof b=='string'?b:JSON.stringify(b))});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.status);return j}
+const W=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'],MO=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const pad=n=>String(n).padStart(2,'0'),key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function tick(){const d=new Date();$('t').textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;$('dt').textContent=`${W[d.getDay()]}, ${d.getDate()} ${MO[d.getMonth()]} ${d.getFullYear()}`}setInterval(tick,1000);tick();
+function fs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+function toast(t,x){const e=document.createElement('div');e.className='toast';e.innerHTML=`<small>${esc(t)}</small><div>${esc(x)}</div>`;$('ts').append(e);setTimeout(()=>e.remove(),9000)}
+let S={events:[],mail:[],config:{},connected:false},month=new Date(),sel=null,since=0,stack=[['Мой диск','root']],cfgLoaded=false;month.setDate(1);
+/* календарь */
+function mv(n){month=new Date(month.getFullYear(),month.getMonth()+n,1);drawCal()}
+function goto(){const n=new Date();month=new Date(n.getFullYear(),n.getMonth(),1);sel=key(n);drawCal()}
+function drawCal(){$('mt').textContent=`${MN[month.getMonth()]} ${month.getFullYear()}`;
+ const busy=new Set(S.events.map(e=>key(new Date(e.start)))),today=key(new Date());let h=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<i>${x}</i>`).join('');
+ const first=(month.getDay()+6)%7,start=new Date(month.getFullYear(),month.getMonth(),1-first);
+ for(let i=0;i<42;i++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=key(d);if(i>=35&&d.getMonth()!=month.getMonth())break;
+  h+=`<div class="d ${busy.has(k)?'e':''} ${k==today?'t':''} ${k==sel?'s':''} ${d.getMonth()!=month.getMonth()?'o':''}" onclick="pickD('${k}')">${d.getDate()}</div>`}
+ $('mg').innerHTML=h;drawEv()}
+function pickD(k){sel=sel==k?null:k;drawCal()}
+function drawEv(){const now=Date.now();let l=S.events.filter(e=>!sel||key(new Date(e.start))==sel);$('evc').textContent=`Событий: ${S.events.length}`;
+ $('evl').innerHTML=l.length?l.map(e=>{const d=new Date(e.start);return`<div class="ev ${Math.abs(d-now)<36e5&&!e.all_day?'now':''}" onclick="window.open('${esc(e.link)}')"><div class="tm">${e.all_day?'весь день':pad(d.getHours())+':'+pad(d.getMinutes())}<div class="dd">${pad(d.getDate())}.${pad(d.getMonth()+1)}</div></div><div><b>${esc(e.title)}</b>${e.location?`<div class="dd">📍 ${esc(e.location)}</div>`:''}</div></div>`}).join(''):'<div class="empty">Нет событий ✨</div>'}
+/* почта */
+function drawMail(){$('mb').textContent=S.mail.length;$('ml').innerHTML=S.mail.length?S.mail.map(m=>{const n=(m.from.split('<')[0].trim()||m.from);return`<div class="mi" onclick="window.open('https://mail.google.com')"><div class="av">${esc(n[0]||'?').toUpperCase()}</div><div><b>${esc(n)}</b><span>${esc(m.subject)}</span><small>${esc(m.snippet)}</small></div></div>`}).join(''):'<div class="empty">Всё прочитано 🎉</div>'}
+/* задачи */
+async function loadT(){if(!S.connected)return;try{const t=await api('/api/tasks');$('tc').textContent=`Осталось: ${t.length}`;
+ $('tl').innerHTML=t.length?t.map(x=>`<div class="tk" id="k${x.id}"><div class="ck" onclick="done('${x.id}')"></div><span>${esc(x.title)}</span>${x.due?`<small>${x.due.split('-').reverse().slice(0,2).join('.')}</small>`:''}<div class="del" onclick="delT('${x.id}')">🗑</div></div>`).join(''):'<div class="empty">Задач нет — отдыхайте 🌴</div>'}catch(e){toast('Задачи',e.message)}}
+async function addT(){const t=$('ti').value.trim();if(!t)return;$('ti').value='';await api('/api/tasks','POST',{title:t,due:$('td').value});$('td').value='';loadT()}
+async function done(id){const e=$('k'+id);e&&e.classList.add('x');await api('/api/tasks/done','POST',{id});setTimeout(loadT,450)}
+async function delT(id){if(confirm('Удалить задачу?')){await api('/api/tasks/delete','POST',{id});loadT()}}
+/* диск */
+async function loadD(){if(!S.connected)return;$('cr').innerHTML=stack.map((s,i)=>`<a style="cursor:pointer;color:${i==stack.length-1?'var(--ink)':'var(--b3)'}" onclick="crumb(${i})">${esc(s[0])}</a>`).join(' › ');
+ const pins=(S.config.drive_folders||[]).map(f=>`<div class="tile" onclick="pin('${esc(f.id)}','${esc(f.name)}')"><i>⭐</i><b>${esc(f.name)}</b></div>`).join('');
+ try{const it=await api('/api/drive?folder='+stack[stack.length-1][1]);$('dc').textContent=`Элементов: ${it.length}`;
+ $('dr').innerHTML=(stack.length==1?pins:'')+it.map(f=>`<div class="tile" onclick="${f.folder?`openF('${f.id}','${esc(f.name).replace(/'/g,'')}')`:`window.open('${esc(f.link)}')`}"><i>${f.folder?'📁':'📄'}</i><b>${esc(f.name)}</b></div>`).join('')}catch(e){toast('Диск',e.message)}}
+function openF(id,n){stack.push([n,id]);loadD()}function crumb(i){stack=stack.slice(0,i+1);loadD()}function pin(id,n){stack=[['Мой диск','root'],[n,id]];loadD()}
+/* настройки */
+function drawer(o){$('dw').classList.toggle('on',!!o);if(o)fillCfg()}
+function fillCfg(){const c=S.config;if(!c.default_lead_minutes)return;$('nc').checked=c.notify_calendar;$('nm').checked=c.notify_mail;$('nl').value=c.default_lead_minutes;$('pc').value=c.calendar_poll_seconds;$('pm').value=c.mail_poll_seconds;$('fo').value=(c.drive_folders||[]).map(f=>f.name+'|'+f.id).join('\n')}
+async function saveCfg(){try{await api('/api/config','POST',{notify_calendar:$('nc').checked,notify_mail:$('nm').checked,default_lead_minutes:+$('nl').value,calendar_poll_seconds:+$('pc').value,mail_poll_seconds:+$('pm').value,drive_folders:$('fo').value.split('\n').map(l=>l.split('|')).filter(p=>p[0]&&p[1]).map(p=>({name:p[0].trim(),id:p[1].trim()}))});toast('Настройки','Сохранено ✓');drawer(0);poll();loadD()}catch(e){toast('Ошибка',e.message)}}
+async function upKey(i){const f=i.files[0];if(!f)return;try{await api('/api/key','POST',await f.text());toast('Google','Ключ загружен. Теперь нажмите «Подключить Google»');poll()}catch(e){toast('Ошибка',e.message)}}
+async function conn(){try{await api('/api/connect','POST');toast('Google','Открылся браузер — разрешите доступ')}catch(e){toast('Ошибка',e.message)}}
+async function refresh(){await api('/api/refresh','POST');setTimeout(()=>{poll();loadT();loadD()},800)}
+/* опрос */
+async function poll(){try{const s=await api('/api/state?since='+since),was=S.connected;S=s;
+ s.alerts.forEach(a=>{since=Math.max(since,a.id);toast(a.title,a.text)});
+ $('dot').className='dot'+(s.connected?' on':'');$('cn').textContent=s.connected?'Google подключён':(s.connecting?'Подключаем…':'Google не подключён');
+ $('hero').classList.toggle('on',!s.connected&&!$('dw').classList.contains('on'));
+ $('gs').textContent=(s.connected?'● Подключено. ':'○ Не подключено. ')+(s.has_key?'Ключ загружен.':'Нужен файл credentials.json.')+(s.error?' Ошибка: '+s.error:'');
+ if(!cfgLoaded&&s.config.default_lead_minutes){cfgLoaded=true;fillCfg()}
+ drawCal();drawMail();if(s.connected&&!was){loadT();loadD()}}catch(e){$('cn').textContent='Нет связи с помощником'}}
+poll();setInterval(poll,5000);setInterval(loadT,60000);
+</script></html>

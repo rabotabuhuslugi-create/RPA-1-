@@ -34,3 +34,27 @@ def test_mail_first_run_silent():
 
 def test_text():
     assert "Через 8 мин" in reminder_text(ev("a", 8), 8)
+
+
+def test_server_auth_and_config(tmp_path, monkeypatch):
+    import json, threading, urllib.error, urllib.request
+    monkeypatch.chdir(tmp_path)
+    from assistant import server
+    core, srv = server.serve(8773)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    def call(path, method="GET", body=None, token=True):
+        req = urllib.request.Request("http://127.0.0.1:8773" + path, data=body, method=method,
+                                     headers={"X-Token": core.token} if token else {})
+        try:
+            return urllib.request.urlopen(req).status
+        except urllib.error.HTTPError as e:
+            return e.code
+
+    assert call("/api/state", token=False) == 403
+    assert call("/api/state") == 200
+    body = json.dumps({"drive_folders": [{"name": "A", "id": "ok-1"}, {"name": "B", "id": "a'b"}]}).encode()
+    assert call("/api/config", "POST", body) == 200
+    assert core.cfg["drive_folders"] == [{"name": "A", "id": "ok-1"}]
+    assert call("/api/key", "POST", b'{"x": 1}') == 500
+    srv.shutdown()

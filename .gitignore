@@ -9,3 +9,4 @@ state/
 credentials.json
 token.json
 assistant_config.yaml
+.assistant_token
