@@ -53,9 +53,10 @@ def test_server_auth_and_config(tmp_path, monkeypatch):
 
     assert call("/api/state", token=False) == 403
     assert call("/api/state") == 200
-    body = json.dumps({"drive_folders": [{"name": "A", "id": "ok-1"}, {"name": "B", "id": "a'b"}]}).encode()
-    assert call("/api/config", "POST", body) == 200
-    assert core.cfg["drive_folders"] == [{"name": "A", "id": "ok-1"}]
+    assert call("/api/config", "POST", json.dumps({"default_lead_minutes": 15}).encode()) == 200
+    assert core.cfg["default_lead_minutes"] == 15
+    assert call("/api/prodcal?year=2026&month=10") == 200
+    assert call("/api/prodcal?year=1900&month=10") == 400
     assert call("/api/key", "POST", b'{"x": 1}') == 500
     srv.shutdown()
 
