@@ -73,3 +73,30 @@ def test_local_calendar_reminder(tmp_path, monkeypatch):
     assert [e["summary"] for e, _ in due] == ["Тест"]
     core.delete_event(core.local[0]["id"])
     assert len(server.load_local()) == 1
+
+
+def test_imap_helpers():
+    from assistant.imap_mail import _dec, host_for
+    assert _dec("=?utf-8?b?0JHRg9GF0LPQsNC70YLQtdGA0LjRjw==?=") == "Бухгалтерия"
+    assert host_for("a@mail.ru") == "imap.mail.ru" and host_for("a@yandex.ru") == "imap.yandex.ru"
+
+
+def test_local_tasks_and_files(tmp_path, monkeypatch):
+    import pytest
+    monkeypatch.chdir(tmp_path)
+    from assistant import server
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "a.pdf").write_text("x")
+    (docs / "run.exe").write_text("x")
+    core = server.Core()
+    core.cfg["local_folders"] = [str(docs)]
+    core.task_add("Позвонить", "2026-10-20")
+    tid = core.tasks()[0]["id"]
+    core.task_change(tid)
+    assert core.tasks() == []
+    assert {f["name"] for f in core.files(str(docs))} == {"a.pdf", "run.exe"}
+    with pytest.raises(PermissionError):
+        core.files(str(tmp_path))          # вне разрешённых папок
+    with pytest.raises(PermissionError):
+        core.open_path(str(docs / "run.exe"))  # программы не запускаем

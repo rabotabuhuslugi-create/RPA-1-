@@ -11,3 +11,5 @@ token.json
 assistant_config.yaml
 .assistant_token
 assistant_events.json
+assistant_tasks.json
+assistant_mail.json
