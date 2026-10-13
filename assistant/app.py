@@ -33,6 +33,36 @@ MONTHS = ["Январь", "Февраль", "Март", "Апрель", "Май"
           "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
 
+BG, CARD, ACCENT, INK, MUTED = "#f6efe4", "#fffaf2", "#d4694a", "#1f1f1f", "#7a6f62"
+TAB_COLORS = {"Календарь": "#f4c9b8", "Задачи": "#f7e0a8", "Диск": "#cfe3c4", "Почта": "#c9dcee"}
+
+
+def apply_theme(root):
+    st = ttk.Style(root)
+    st.theme_use("clam")
+    root.configure(bg=BG)
+    st.configure(".", background=BG, foreground=INK, font=("Segoe UI", 10))
+    st.configure("TFrame", background=BG)
+    st.configure("Card.TFrame", background=CARD)
+    st.configure("TLabel", background=BG, foreground=INK)
+    st.configure("Muted.TLabel", foreground=MUTED)
+    st.configure("Title.TLabel", font=("Segoe UI Black", 20, "bold"), foreground=INK)
+    st.configure("Accent.TLabel", font=("Segoe UI Black", 20, "bold"), foreground=ACCENT)
+    st.configure("Month.TLabel", font=("Segoe UI", 13, "bold"), background=CARD)
+    st.configure("TButton", background=ACCENT, foreground="white", borderwidth=0,
+                 padding=(12, 6), font=("Segoe UI", 10, "bold"))
+    st.map("TButton", background=[("active", "#b9573a")])
+    st.configure("TEntry", fieldbackground=CARD, padding=5)
+    st.configure("TNotebook", background=BG, borderwidth=0, tabmargins=(0, 4, 0, 0))
+    st.configure("TNotebook.Tab", background="#e8dccb", foreground=INK, padding=(18, 8),
+                 font=("Segoe UI", 10, "bold"), borderwidth=0)
+    st.map("TNotebook.Tab", background=[("selected", ACCENT)], foreground=[("selected", "white")])
+    st.configure("Treeview", background=CARD, fieldbackground=CARD, rowheight=28, borderwidth=0)
+    st.configure("Treeview.Heading", background="#ecdcc4", foreground=INK,
+                 font=("Segoe UI", 10, "bold"), relief="flat", padding=5)
+    st.map("Treeview", background=[("selected", "#f4c9b8")], foreground=[("selected", INK)])
+
+
 def load_config(path="assistant_config.yaml") -> dict:
     cfg = dict(DEFAULTS)
     p = Path(path)
@@ -53,16 +83,26 @@ class App(tk.Tk):
         self.month = dt.date.today().replace(day=1)
 
         self.title("Помощник")
-        self.geometry("560x640")
+        self.geometry("600x720")
+        apply_theme(self)
         self.attributes("-topmost", bool(cfg["always_on_top"]))
         self.status = tk.StringVar(value="Подключение к Google…")
+        head = ttk.Frame(self)
+        head.pack(fill="x", padx=16, pady=(14, 6))
+        tk.Label(head, text="✺", font=("Segoe UI", 30), fg=ACCENT, bg=BG).pack(side="left")
+        box = ttk.Frame(head)
+        box.pack(side="left", padx=10)
+        ttk.Label(box, text="МОЙ ПОМОЩНИК", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(box, text="Календарь · Задачи · Диск · Почта", style="Muted.TLabel").pack(anchor="w")
+        self.today_lbl = ttk.Label(head, text=dt.date.today().strftime("%d.%m.%Y"), style="Accent.TLabel")
+        self.today_lbl.pack(side="right")
         tabs = ttk.Notebook(self)
-        tabs.pack(fill="both", expand=True)
+        tabs.pack(fill="both", expand=True, padx=12)
         self._build_calendar(tabs)
         self._build_tasks(tabs)
         self._build_drive(tabs)
         self._build_mail(tabs)
-        ttk.Label(self, textvariable=self.status, anchor="w").pack(fill="x", padx=6, pady=2)
+        ttk.Label(self, textvariable=self.status, style="Muted.TLabel", anchor="w").pack(fill="x", padx=16, pady=6)
 
         self.after(200, self._pump)
         self._spawn(self._calendar_loop)
@@ -75,13 +115,13 @@ class App(tk.Tk):
         f = ttk.Frame(tabs)
         tabs.add(f, text="Календарь")
         head = ttk.Frame(f)
-        head.pack(fill="x", pady=4)
+        head.pack(fill="x", pady=6, padx=6)
         ttk.Button(head, text="◀", width=3, command=lambda: self._shift_month(-1)).pack(side="left")
-        self.month_lbl = ttk.Label(head, font=("", 12, "bold"), anchor="center")
+        self.month_lbl = ttk.Label(head, style="Month.TLabel", anchor="center")
         self.month_lbl.pack(side="left", expand=True, fill="x")
         ttk.Button(head, text="▶", width=3, command=lambda: self._shift_month(1)).pack(side="right")
-        self.grid_frame = ttk.Frame(f)
-        self.grid_frame.pack(padx=6)
+        self.grid_frame = ttk.Frame(f, style="Card.TFrame")
+        self.grid_frame.pack(padx=6, pady=4, ipadx=6, ipady=6)
         self.ev_tree = ttk.Treeview(f, columns=("d", "t", "s"), show="headings", height=12)
         for c, t, w in (("d", "Дата", 80), ("t", "Время", 55), ("s", "Событие", 350)):
             self.ev_tree.heading(c, text=t)
@@ -214,7 +254,8 @@ class App(tk.Tk):
         self.month_lbl.config(text=f"{MONTHS[self.month.month - 1]} {self.month.year}")
         busy = {e["start"].astimezone().date() for e in self.events}
         for i, n in enumerate(["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]):
-            ttk.Label(self.grid_frame, text=n, width=5, anchor="center").grid(row=0, column=i)
+            tk.Label(self.grid_frame, text=n, width=5, anchor="center", bg=CARD, fg=MUTED,
+                     font=("Segoe UI", 9, "bold")).grid(row=0, column=i)
         today = dt.date.today()
         for r, week in enumerate(calendar.monthcalendar(self.month.year, self.month.month), 1):
             for c, day in enumerate(week):
@@ -222,9 +263,11 @@ class App(tk.Tk):
                     continue
                 d = dt.date(self.month.year, self.month.month, day)
                 txt = f"{day}•" if d in busy else str(day)
-                tk.Label(self.grid_frame, text=txt, width=5, anchor="center",
-                         bg="#ffd54f" if d == today else None,
-                         fg="#1565c0" if d in busy else None).grid(row=r, column=c)
+                tk.Label(self.grid_frame, text=txt, width=5, height=2, anchor="center",
+                         bg=ACCENT if d == today else CARD,
+                         fg="white" if d == today else (ACCENT if d in busy else INK),
+                         font=("Segoe UI", 10, "bold" if d in busy or d == today else "normal")
+                         ).grid(row=r, column=c, padx=1, pady=1)
 
     def _set_events(self, evs):
         self.events = evs
