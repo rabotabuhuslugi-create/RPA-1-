@@ -28,6 +28,19 @@ class Google:
         self.token_file = Path(token_file)
         self._svc: dict = {}
 
+    def connected(self) -> bool:
+        return self.token_file.exists()
+
+    def connect(self):
+        """Вход через браузер (нужен credentials.json). Блокирует до окончания входа."""
+        self._svc.clear()
+        return self._creds()
+
+    def disconnect(self):
+        self._svc.clear()
+        if self.token_file.exists():
+            self.token_file.unlink()
+
     def _creds(self):
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
