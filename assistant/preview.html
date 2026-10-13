@@ -1,0 +1,25 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Помощник — макет</title>
+<style>
+body{font:14px Segoe UI,sans-serif;background:#dfe6ee;margin:0;padding:24px;display:flex;justify-content:center}
+.win{width:520px;background:#f0f0f0;border:1px solid #888;box-shadow:0 8px 24px #0004}
+.bar{background:#fff;padding:6px 10px;border-bottom:1px solid #ccc}
+.tabs{display:flex;gap:2px;padding:6px 6px 0}.tabs b{padding:5px 14px;background:#e1e1e1;border:1px solid #bbb;border-bottom:0;font-weight:400}.tabs b.on{background:#fff}
+.pane{background:#fff;margin:0 6px;border:1px solid #bbb;padding:8px}
+.m{display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-bottom:6px}
+table.c{margin:auto;border-collapse:collapse}.c td,.c th{width:44px;text-align:center;padding:3px}.t{background:#ffd54f}.b{color:#1565c0;font-weight:700}
+table.l{width:100%;border-collapse:collapse;margin-top:8px}.l th{background:#eee;text-align:left;padding:3px 6px;border:1px solid #ccc}.l td{padding:3px 6px;border-bottom:1px solid #eee}
+.st{padding:4px 8px;font-size:12px;color:#444}
+.toast{position:fixed;right:20px;bottom:20px;width:300px;background:#2b2b2b;color:#fff;padding:12px 14px;box-shadow:0 4px 14px #0008}.toast small{color:#aaa}
+</style>
+<div class="win"><div class="bar">Помощник</div>
+<div class="tabs"><b class="on">Календарь</b><b>Задачи</b><b>Диск</b><b>Почта</b></div>
+<div class="pane">
+<div class="m"><span>◀</span><span>Октябрь 2026</span><span>▶</span></div>
+<table class="c"><tr><th>Пн<th>Вт<th>Ср<th>Чт<th>Пт<th>Сб<th>Вс</tr>
+<tr><td><td><td>1<td>2<td>3<td>4<td>5</tr><tr><td>6<td>7<td>8<td>9<td class="b">10•<td>11<td>12</tr>
+<tr><td>13<td class="t b">14•<td>15<td class="b">16•<td>17<td>18<td>19</tr><tr><td>20<td>21<td class="b">22•<td>23<td>24<td>25<td>26</tr><tr><td>27<td>28<td>29<td>30<td>31<td><td></tr></table>
+<table class="l"><tr><th>Дата<th>Время<th>Событие</tr>
+<tr><td>14.10<td>10:00<td>Встреча с поставщиком</tr><tr><td>16.10<td>весь день<td>Сдача отчёта</tr><tr><td>22.10<td>15:30<td>Звонок бухгалтеру</tr></table>
+<div style="margin-top:8px;font-size:12px;color:#666">▸ Вкладка «Задачи»: ☐ Позвонить в банк (до 15.10) · ☐ Отправить акт<br>▸ «Диск»: 📁 Договоры · 📁 Сканы · 📄 Счёт №12.pdf<br>▸ «Почта»: непрочитанные письма списком</div>
+</div><div class="st">Обновлено 10:42: событий 3</div></div>
+<div class="toast"><small>Календарь</small><br><b>Через 10 мин: Встреча с поставщиком (10:00)</b></div></html>
