@@ -16,6 +16,7 @@ from pathlib import Path
 
 CACHE = Path("assistant_prodcal.json")
 RETRY_SECONDS = 7 * 86400
+_FAILED: dict[str, float] = {}  # месяц -> когда не удалось (не долбим сеть чаще раза в 10 минут)
 
 # Федеральные праздники РФ (месяц, день): Новый год 1–8 янв, 23 фев, 8 мар, 1 мая, 9 мая, 12 июн, 4 ноя
 FIXED = [(1, d) for d in range(1, 9)] + [(2, 23), (3, 8), (5, 1), (5, 9), (6, 12), (11, 4)]
@@ -58,7 +59,7 @@ def _load() -> dict:
 def _fetch(year: int, month: int) -> str | None:
     url = f"https://isdayoff.ru/api/getdata?year={year}&month={month}&pre=1"
     try:
-        text = urllib.request.urlopen(url, timeout=6).read().decode().strip()
+        text = urllib.request.urlopen(url, timeout=3).read().decode().strip()
     except Exception:
         return None
     n = calendar.monthrange(year, month)[1]
@@ -73,7 +74,9 @@ def month_info(year: int, month: int) -> dict:
     entry = cache.get(key)
     source = "cache"
     if not entry or time.time() - entry.get("checked", 0) > RETRY_SECONDS:
-        fresh = _fetch(year, month)
+        fresh = None if time.time() - _FAILED.get(key, 0) < 600 else _fetch(year, month)
+        if fresh is None:
+            _FAILED[key] = time.time()
         if fresh:
             entry = {"days": fresh, "checked": time.time(), "online": True}
             cache[key] = entry
