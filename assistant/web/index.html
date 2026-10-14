@@ -69,6 +69,10 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
  .actions{gap:6px}.ib{width:36px;height:36px;font-size:15px}.drawer{width:100vw}
  .add{flex-wrap:wrap}.add #ti{flex:1 1 100%!important}.add #td{flex:1;width:auto!important}
 }
+.grip,.er,.eb{position:fixed;z-index:20;touch-action:none}
+.grip{right:0;bottom:0;width:28px;height:28px;cursor:nwse-resize;border-radius:0 0 14px 0;background:linear-gradient(135deg,transparent 52%,#ffffff66 52%,#ffffff66 60%,transparent 60%,transparent 72%,#ffffff66 72%,#ffffff66 80%,transparent 80%)}
+.er{right:0;top:60px;bottom:30px;width:7px;cursor:ew-resize}.eb{bottom:0;left:30px;right:30px;height:7px;cursor:ns-resize}
+body.pw .grip,body.pw .er,body.pw .eb{display:block}.grip,.er,.eb{display:none}
 </style>
 <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 <header class="pywebview-drag-region">
@@ -112,6 +116,7 @@ input,textarea{background:#ffffff0d;border:1px solid var(--ln);color:var(--ink);
  <p style="color:var(--mut);font-size:13px">Нужно только для синхронизации с Google-календарём и задачами.</p></details>
  <div class="row" style="margin-top:18px"><button class="btn p" onclick="saveCfg()">Сохранить</button><button class="btn" onclick="api('/api/notify-test','POST')">🔔 Проверить уведомление</button><button class="btn" onclick="if(confirm('Закрыть помощника? Уведомления прекратятся.'))api('/api/quit','POST').then(()=>window.close())">Выйти</button></div>
 </aside>
+<div class="grip" id="grip" title="Потяните, чтобы изменить размер окна"></div><div class="er" id="er"></div><div class="eb" id="eb"></div>
 <div class="toasts" id="ts"></div>
 <script>
 const TOKEN="__TOKEN__",$=i=>document.getElementById(i);
@@ -121,6 +126,13 @@ const W=['Воскресенье','Понедельник','Вторник','С�
 const pad=n=>String(n).padStart(2,'0'),key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 function tick(){const d=new Date();$('t').textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;$('dt').textContent=`${W[d.getDay()]}, ${d.getDate()} ${MO[d.getMonth()]} ${d.getFullYear()}`}setInterval(tick,1000);tick();
 function pwApi(n){const a=window.pywebview&&window.pywebview.api;a&&a[n]()}
+function resizer(el,ax,ay){el.addEventListener('pointerdown',async e=>{
+ const a=window.pywebview&&window.pywebview.api;if(!a)return;e.preventDefault();el.setPointerCapture(e.pointerId);
+ const [W,H]=await a.size(),k=W/Math.max(window.innerWidth,1),x0=e.screenX,y0=e.screenY;let busy=false,pend=null;
+ const mv=ev=>{pend=[W+(ax?(ev.screenX-x0)*k:0),H+(ay?(ev.screenY-y0)*k:0)];if(!busy){busy=true;requestAnimationFrame(async()=>{busy=false;if(pend){const p=pend;pend=null;await a.resize(p[0],p[1])}})}};
+ const up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);a.save_size()};
+ el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up)})}
+resizer($('grip'),1,1);resizer($('er'),1,0);resizer($('eb'),0,1);
 window.addEventListener('pywebviewready',()=>document.body.classList.add('pw'));
 function fs(){window.pywebview?pwApi('fullscreen'):(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())}
 function toast(t,x){const e=document.createElement('div');e.className='toast';e.innerHTML=`<small>${esc(t)}</small><div>${esc(x)}</div>`;$('ts').append(e);setTimeout(()=>e.remove(),9000)}

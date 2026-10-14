@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -15,6 +16,7 @@ from pathlib import Path
 
 from .server import VERSION, serve
 
+SIZE_FILE = Path("assistant_window.json")
 PORT = 8770
 URL = f"http://127.0.0.1:{PORT}/"
 
@@ -82,6 +84,18 @@ class WindowApi:
         self._full = not self._full
         self.window.toggle_fullscreen()
 
+    def size(self):
+        return [self.window.width, self.window.height]
+
+    def resize(self, w, h):
+        self.window.resize(max(380, min(int(w), 4000)), max(520, min(int(h), 4000)))
+
+    def save_size(self):
+        try:
+            SIZE_FILE.write_text(json.dumps(self.size()), encoding="utf-8")
+        except OSError:
+            pass
+
     def quit(self):
         os._exit(0)
 
@@ -93,7 +107,12 @@ def run_native_window() -> bool:
     except Exception:
         return False
     api = WindowApi()
-    api.window = webview.create_window("Помощник", URL, js_api=api, width=480, height=800,
+    width, height = 480, 800
+    try:
+        width, height = [int(x) for x in json.loads(SIZE_FILE.read_text(encoding="utf-8"))]
+    except (OSError, ValueError, TypeError):
+        pass
+    api.window = webview.create_window("Помощник", URL, js_api=api, width=width, height=height,
                                        min_size=(380, 560), frameless=True, easy_drag=False,
                                        background_color="#05060b")
     webview.start()
