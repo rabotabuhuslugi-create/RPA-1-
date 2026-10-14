@@ -125,7 +125,7 @@ function pwApi(n){const a=window.pywebview&&window.pywebview.api;a&&a[n]()}
 function resizer(el,ax,ay){el.addEventListener('pointerdown',async e=>{
  const a=window.pywebview&&window.pywebview.api;if(!a)return;e.preventDefault();el.setPointerCapture(e.pointerId);
  const [W,H]=await a.size(),k=W/Math.max(window.innerWidth,1),x0=e.screenX,y0=e.screenY;let busy=false,pend=null;
- const mv=ev=>{pend=[W+(ax?(ev.screenX-x0)*k:0),H+(ay?(ev.screenY-y0)*k:0)];if(!busy){busy=true;requestAnimationFrame(async()=>{busy=false;if(pend){const p=pend;pend=null;await a.resize(p[0],p[1])}})}};
+ const mv=ev=>{pend=[W+(ax?(ev.screenX-x0)*k:0),H+(ay?(ev.screenY-y0)*k:0)];if(!busy){busy=true;setTimeout(async()=>{const p=pend;pend=null;try{if(p)await a.resize(p[0],p[1])}finally{busy=false}},40)}};
  const up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);a.save_size()};
  el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up)})}
 resizer($('grip'),1,1);resizer($('er'),1,0);resizer($('eb'),0,1);

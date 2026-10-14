@@ -74,21 +74,21 @@ class WindowApi:
     """Кнопки окна без рамки (доступны странице как window.pywebview.api.*)."""
 
     def __init__(self):
-        self.window = None
+        self._window = None  # приватный: pywebview обходит публичные атрибуты, и окно зависало
         self._full = False
 
     def minimize(self):
-        self.window.minimize()
+        self._window.minimize()
 
     def fullscreen(self):
         self._full = not self._full
-        self.window.toggle_fullscreen()
+        self._window.toggle_fullscreen()
 
     def size(self):
-        return [self.window.width, self.window.height]
+        return [self._window.width, self._window.height]
 
     def resize(self, w, h):
-        self.window.resize(max(380, min(int(w), 4000)), max(520, min(int(h), 4000)))
+        self._window.resize(max(380, min(int(w), 4000)), max(520, min(int(h), 4000)))
 
     def save_size(self):
         try:
@@ -112,7 +112,7 @@ def run_native_window() -> bool:
         width, height = [int(x) for x in json.loads(SIZE_FILE.read_text(encoding="utf-8"))]
     except (OSError, ValueError, TypeError):
         pass
-    api.window = webview.create_window("Помощник", URL, js_api=api, width=width, height=height,
+    api._window = webview.create_window("Помощник", URL, js_api=api, width=width, height=height,
                                        min_size=(380, 560), frameless=True, easy_drag=False,
                                        background_color="#05060b")
     webview.start()
