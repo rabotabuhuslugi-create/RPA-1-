@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Quest — тренажёр Spotlight 4</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"Comic Sans MS","Trebuchet MS",system-ui,sans-serif;min-height:100vh;color:#33305c;
+background:linear-gradient(160deg,#ffe29f,#ffa99f 45%,#a18cd1);background-attachment:fixed;overflow-x:hidden}
+.clouds{position:fixed;inset:0;pointer-events:none;z-index:0;font-size:60px;opacity:.5}
+.clouds span{position:absolute;animation:float 12s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-25px) rotate(8deg)}}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:16px}
+h1{text-align:center;font-size:clamp(28px,6vw,48px);margin:8px 0;color:#fff;text-shadow:3px 3px 0 #7b4fd6,5px 5px 0 rgba(0,0,0,.15)}
+.sub{text-align:center;color:#fff;font-size:18px;margin-bottom:14px;text-shadow:1px 1px 2px rgba(0,0,0,.3)}
+.bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.pill{background:#fff;border-radius:30px;padding:6px 16px;font-weight:bold;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.card{border:none;border-radius:22px;padding:16px 10px;color:#fff;font:inherit;cursor:pointer;
+box-shadow:0 6px 0 rgba(0,0,0,.22);transition:transform .15s;text-align:center}
+.card:hover{transform:translateY(-4px) rotate(-1.5deg)}
+.card:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.22)}
+.card .em{font-size:48px;display:block}
+.card b{display:block;font-size:19px;margin-top:4px}
+.card small{display:block;opacity:.95;margin-top:2px}
+.stars{font-size:22px;margin-top:4px;letter-spacing:2px}
+.panel{background:#fff;border-radius:28px;padding:20px;box-shadow:0 8px 0 rgba(0,0,0,.18);text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.btn{border:none;border-radius:16px;padding:10px 20px;font:inherit;font-weight:bold;font-size:18px;color:#fff;background:#7b4fd6;cursor:pointer;box-shadow:0 4px 0 #4d2c99}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #4d2c99}
+.btn.g{background:#2fbf71;box-shadow:0 4px 0 #1c8a50}
+.btn.o{background:#ff8a3d;box-shadow:0 4px 0 #c45a16}
+.prog{height:16px;background:#eee;border-radius:10px;overflow:hidden;margin-bottom:14px}
+.prog div{height:100%;width:0;background:linear-gradient(90deg,#ff6b9d,#ffb347,#2fbf71);transition:width .4s}
+.big{font-size:90px;line-height:1.1;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:scale(1.1) rotate(4deg)}}
+.q{font-size:clamp(20px,4vw,28px);font-weight:bold;margin:8px 0 16px}
+.hint{color:#8a85b5;font-size:15px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.opt{border:3px solid #e1dcff;background:#f7f5ff;border-radius:18px;padding:14px;font:inherit;font-size:20px;font-weight:bold;cursor:pointer;color:#33305c;transition:.15s}
+.opt:hover{background:#ece6ff;transform:scale(1.03)}
+.opt.ok{background:#b8f2cf;border-color:#2fbf71;animation:pop .4s}
+.opt.bad{background:#ffc9c9;border-color:#ee4d4d;animation:shake .4s}
+@keyframes pop{50%{transform:scale(1.12)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+input.ans{font:inherit;font-size:26px;text-align:center;padding:10px;border-radius:16px;border:3px solid #e1dcff;width:min(320px,90%);outline:none;text-transform:lowercase}
+input.ans:focus{border-color:#7b4fd6}
+.fb{min-height:34px;font-size:22px;font-weight:bold;margin-top:12px}
+.fb.ok{color:#1c8a50}.fb.bad{color:#d33}
+.hearts{font-size:24px}
+.res .big{font-size:110px}
+.conf{position:fixed;top:-20px;font-size:28px;z-index:9;pointer-events:none;animation:fall 2.5s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.hidden{display:none}
+.foot{text-align:center;color:#fff;font-size:13px;margin-top:18px;text-shadow:1px 1px 2px rgba(0,0,0,.3)}
+</style>
+</head>
+<body>
+<div class="clouds"><span style="left:5%;top:8%">☁️</span><span style="left:80%;top:12%;animation-delay:2s">⭐</span><span style="left:15%;top:75%;animation-delay:4s">🎈</span><span style="left:85%;top:70%;animation-delay:1s">☁️</span><span style="left:50%;top:90%;animation-delay:3s">🌈</span></div>
+<div class="wrap">
+  <h1>🎓 English Quest</h1>
+  <div class="sub">Тренажёр по учебнику «Английский в фокусе» (Spotlight) · 4 класс</div>
+
+  <div id="menu">
+    <div class="bar">
+      <div class="pill">⭐ Звёзд: <span id="totalStars">0</span></div>
+      <div class="pill">🏆 Уровень: <span id="level">1</span></div>
+      <button class="pill" id="soundBtn" style="border:none;cursor:pointer;font:inherit">🔊 Звук</button>
+    </div>
+    <div class="grid" id="topics"></div>
+  </div>
+
+  <div id="game" class="hidden panel">
+    <div class="top">
+      <button class="btn o" id="backBtn">⬅ Меню</button>
+      <div class="pill" id="topicName"></div>
+      <div class="hearts" id="hearts"></div>
+    </div>
+    <div class="prog"><div id="prog"></div></div>
+    <div id="stage"></div>
+  </div>
+  <div class="foot">Темы подобраны по программе 4 класса (Spotlight). Играй каждый день — и станешь чемпионом английского! 🏅</div>
+</div>
+
+<script>
+/* ===== ДАННЫЕ ===== */
+// words: [эмодзи, English, по-русски]
+// gram: [вопрос, [варианты], индекс правильного]
+const TOPICS=[
+{id:"school",name:"Школа",em:"🎒",color:"#ff6b6b",
+ words:[["✏️","pencil","карандаш"],["📏","ruler","линейка"],["📖","book","книга"],["🎒","bag","рюкзак"],["🧽","rubber","ластик"],["📓","notebook","тетрадь"],["🖊️","pen","ручка"],["🪑","desk","парта"],["👩‍🏫","teacher","учитель"],["📐","maths","математика"]],
+ gram:[["This is ___ pencil.",["a","an","the"],0],["It is ___ orange eraser.",["a","an","two"],1],["___ is your name? — I am Ann.",["Where","What","Who"],1],["How ___ are you? — I am nine.",["old","many","much"],0],["Open ___ books, please!",["you","your","yours"],1]]},
+{id:"family",name:"Моя семья",em:"👨‍👩‍👧‍👦",color:"#ff9f1c",
+ words:[["👩","mother","мама"],["👨","father","папа"],["👵","grandmother","бабушка"],["👴","grandfather","дедушка"],["👦","brother","брат"],["👧","sister","сестра"],["👶","baby","малыш"],["👨‍👩‍👧","family","семья"],["🧑","uncle","дядя"],["👩‍🦱","aunt","тётя"]],
+ gram:[["She ___ a sister.",["have got","has got","is got"],1],["I ___ got two brothers.",["has","have","am"],1],["This is my mother. ___ name is Kate.",["His","Her","Its"],1],["Tom is my brother. ___ is ten.",["He","She","It"],0],["They ___ my grandparents.",["is","am","are"],2]]},
+{id:"animals",name:"Животные",em:"🦁",color:"#2fbf71",
+ words:[["🐱","cat","кошка"],["🐶","dog","собака"],["🐘","elephant","слон"],["🐒","monkey","обезьяна"],["🦁","lion","лев"],["🐢","turtle","черепаха"],["🐰","rabbit","кролик"],["🦒","giraffe","жираф"],["🐟","fish","рыба"],["🐦","bird","птица"]],
+ gram:[["A bird ___ fly.",["can","cans","is"],0],["Fish ___ walk.",["can","can't","are"],1],["___ the monkey climb? — Yes, it can.",["Is","Does","Can"],2],["I ___ two cats.",["has got","have got","am got"],1],["Elephants are ___.",["big","a big","bigs"],0]]},
+{id:"food",name:"Еда",em:"🍎",color:"#e84393",
+ words:[["🍎","apple","яблоко"],["🍞","bread","хлеб"],["🥛","milk","молоко"],["🧀","cheese","сыр"],["🍌","banana","банан"],["🥕","carrot","морковь"],["🍕","pizza","пицца"],["🍰","cake","торт"],["🥚","egg","яйцо"],["🍦","ice cream","мороженое"]],
+ gram:[["I like pizza. I ___ like fish.",["don't","doesn't","isn't"],0],["She ___ apples.",["like","likes","liking"],1],["Do you like cake? — Yes, I ___.",["do","does","like"],0],["Can I have ___ milk, please?",["some","a","an"],0],["I'm hungry. I want ___ egg.",["a","an","some a"],1]]},
+{id:"colors",name:"Цвета и числа",em:"🌈",color:"#7b4fd6",
+ words:[["🔴","red","красный"],["🔵","blue","синий"],["🟢","green","зелёный"],["🟡","yellow","жёлтый"],["🟠","orange","оранжевый"],["🟣","purple","фиолетовый"],["⚫","black","чёрный"],["⚪","white","белый"],["🤎","brown","коричневый"],["🩷","pink","розовый"]],
+ gram:[["Seven + five = ?",["eleven","twelve","thirteen"],1],["Twenty − eight = ?",["twelve","eleven","fourteen"],0],["The sky is ___.",["blue","green","pink"],0],["Next number: fourteen, fifteen, ___",["sixteen","fifty","sixty"],0],["What colour is a banana?",["It's red.","It's yellow.","It's black."],1]]},
+{id:"home",name:"Мой дом",em:"🏠",color:"#00a8cc",
+ words:[["🛏️","bedroom","спальня"],["🍳","kitchen","кухня"],["🛁","bathroom","ванная"],["🛋️","living room","гостиная"],["🛋","sofa","диван"],["🪟","window","окно"],["🚪","door","дверь"],["🪑","chair","стул"],["📺","TV","телевизор"],["🌳","garden","сад"]],
+ gram:[["There ___ a sofa in the room.",["is","are","am"],0],["There ___ two chairs.",["is","are","be"],1],["The cat is ___ the table. (под)",["on","under","in"],1],["The ball is ___ the box. (в)",["on","in","at"],1],["Where is the lamp? — It's ___ the bed. (рядом)",["next to","to","from"],0]]},
+{id:"weather",name:"Погода и времена года",em:"⛅",color:"#3db2ff",
+ words:[["☀️","sunny","солнечно"],["🌧️","rainy","дождливо"],["❄️","snowy","снежно"],["💨","windy","ветрено"],["☁️","cloudy","облачно"],["🌸","spring","весна"],["🏖️","summer","лето"],["🍂","autumn","осень"],["⛄","winter","зима"],["🌈","rainbow","радуга"]],
+ gram:[["What's the weather like? — It's ___.",["sun","sunny","sunnies"],1],["In winter it is ___.",["cold","hot","warm"],0],["It ___ now. (идёт дождь)",["rains","is raining","rain"],1],["We go swimming in ___.",["winter","summer","autumn"],1],["The children ___ snowballs now.",["throw","is throwing","are throwing"],2]]},
+{id:"clothes",name:"Одежда",em:"👕",color:"#f368e0",
+ words:[["👕","T-shirt","футболка"],["👖","jeans","джинсы"],["👗","dress","платье"],["🧢","cap","кепка"],["👟","shoes","туфли/кроссовки"],["🧦","socks","носки"],["🧥","coat","пальто"],["🧣","scarf","шарф"],["🧤","gloves","перчатки"],["🩳","shorts","шорты"]],
+ gram:[["She is ___ a red dress.",["wear","wearing","wears"],1],["These ___ my socks.",["is","are","am"],1],["___ is my cap. (этот)",["This","These","Those"],0],["I put ___ my coat. It's cold!",["on","in","at"],0],["Whose jacket is it? — It's ___.",["my","mine","I"],1]]},
+{id:"time",name:"Время и дни недели",em:"⏰",color:"#ee5a24",
+ words:[["1️⃣","Monday","понедельник"],["2️⃣","Tuesday","вторник"],["3️⃣","Wednesday","среда"],["4️⃣","Thursday","четверг"],["5️⃣","Friday","пятница"],["🎉","Saturday","суббота"],["😴","Sunday","воскресенье"],["🌅","morning","утро"],["🌙","night","ночь"],["🕒","clock","часы"]],
+ gram:[["I get up ___ seven o'clock.",["in","on","at"],2],["We have lessons ___ Monday.",["in","on","at"],1],["I go to school ___ the morning.",["in","on","at"],0],["He ___ breakfast at eight.",["have","has","having"],1],["What day comes after Friday?",["Sunday","Thursday","Saturday"],2]]},
+{id:"hobbies",name:"Хобби и спорт",em:"⚽",color:"#10ac84",
+ words:[["⚽","football","футбол"],["🏊","swim","плавать"],["🚲","ride a bike","кататься на велосипеде"],["🎨","paint","рисовать красками"],["🎵","sing","петь"],["💃","dance","танцевать"],["📚","read","читать"],["🏀","basketball","баскетбол"],["♟️","chess","шахматы"],["🎸","guitar","гитара"]],
+ gram:[["I ___ playing football.",["like","likes","am like"],0],["He can ___ very well.",["swims","swim","swimming"],1],["She ___ to music every day.",["listen","listens","listening"],1],["Do they play chess? — No, they ___.",["don't","doesn't","aren't"],0],["Look! The boys ___ football.",["play","plays","are playing"],2]]},
+{id:"town",name:"Город",em:"🏙️",color:"#5f27cd",
+ words:[["🏫","school","школа"],["🏥","hospital","больница"],["🛒","shop","магазин"],["🌳","park","парк"],["🚌","bus","автобус"],["🚑","ambulance","скорая"],["🏊","pool","бассейн"],["📮","post office","почта"],["🍽️","café","кафе"],["🎬","cinema","кинотеатр"]],
+ gram:[["Turn ___ at the shop. (налево)",["left","right","straight"],0],["Go ___ ahead. (прямо)",["straight","left","up"],0],["How do I get ___ the park?",["to","at","on"],0],["The cinema is ___ the school. (напротив)",["opposite","under","between"],0],["We go to school ___ bus.",["on","by","in"],1]]},
+{id:"past",name:"Вчера (Past Simple)",em:"⏪",color:"#d63031",
+ words:[["🚶","walked","ходил"],["🎮","played","играл"],["🍽️","ate","ел"],["👀","saw","видел"],["🏃","ran","бежал"],["📖","read","читал"],["🏖️","went","ходил/ездил"],["✍️","wrote","писал"],["🏊","swam","плавал"],["🎁","got","получил"]],
+ gram:[["Yesterday I ___ football.",["play","played","plays"],1],["She ___ to school yesterday.",["go","goes","went"],2],["We ___ a film last night.",["watched","watch","watching"],0],["I ___ at home yesterday. (был)",["was","were","am"],0],["They ___ in the park. (были)",["was","were","is"],1]]}
+];
+
+/* ===== СОСТОЯНИЕ ===== */
+const $=s=>document.querySelector(s);
+let save={};try{save=JSON.parse(localStorage.getItem("eq_save")||"{}")}catch(e){}
+let soundOn=true,ac=null;
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const store=()=>{try{localStorage.setItem("eq_save",JSON.stringify(save))}catch(e){}};
+
+/* ===== ЗВУК ===== */
+function beep(freqs,dur=.12){
+  if(!soundOn)return;
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  freqs.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type="triangle";o.frequency.value=f;
+  o.connect(g);g.connect(ac.destination);const t=ac.currentTime+i*dur;g.gain.setValueAtTime(.2,t);
+  g.gain.exponentialRampToValueAtTime(.001,t+dur);o.start(t);o.stop(t+dur)})}catch(e){}
+}
+const sOk=()=>beep([523,659,784]),sBad=()=>beep([220,165],.18),sWin=()=>beep([523,659,784,1047,784,1047],.13);
+function say(t){ if(!soundOn||!window.speechSynthesis)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
+
+/* ===== МЕНЮ ===== */
+function stars(n){return "⭐".repeat(n)+"☆".repeat(3-n)}
+function renderMenu(){
+  let total=0;
+  $("#topics").innerHTML=TOPICS.map(t=>{const s=save[t.id]||0;total+=s;
+    return `<button class="card" style="background:${t.color}" data-id="${t.id}"><span class="em">${t.em}</span><b>${t.name}</b><small>10 вопросов</small><div class="stars">${stars(s)}</div></button>`}).join("")
+   +`<button class="card" style="background:linear-gradient(135deg,#ff6b6b,#ffb347,#2fbf71,#3db2ff,#7b4fd6)" data-id="mix"><span class="em">🎲</span><b>Супер-игра</b><small>Микс из всех тем</small></button>`;
+  $("#totalStars").textContent=total;
+  $("#level").textContent=1+Math.floor(total/6);
+  document.querySelectorAll(".card").forEach(c=>c.onclick=()=>start(c.dataset.id));
+  $("#menu").classList.remove("hidden");$("#game").classList.add("hidden");
+}
+$("#soundBtn").onclick=function(){soundOn=!soundOn;this.textContent=soundOn?"🔊 Звук":"🔇 Тихо"};
+$("#backBtn").onclick=renderMenu;
+
+/* ===== ГЕНЕРАЦИЯ ВОПРОСОВ ===== */
+function makeQuestions(topicIds){
+  const pool=[];
+  topicIds.forEach(id=>{
+    const t=TOPICS.find(x=>x.id===id);
+    shuffle(t.words).slice(0,topicIds.length>1?2:4).forEach(w=>{
+      const wrong=shuffle(t.words.filter(x=>x!==w)).slice(0,3);
+      pool.push({type:"pic",w,opts:shuffle([w,...wrong].map(x=>x[1])),ans:w[1]});
+    });
+    shuffle(t.words).slice(0,topicIds.length>1?1:2).forEach(w=>{
+      const wrong=shuffle(t.words.filter(x=>x!==w)).slice(0,3);
+      pool.push({type:"ru",w,opts:shuffle([w,...wrong].map(x=>x[2])),ans:w[2]});
+    });
+    shuffle(t.words).slice(0,topicIds.length>1?1:2).forEach(w=>pool.push({type:"spell",w,ans:w[1].toLowerCase()}));
+    shuffle(t.gram).slice(0,topicIds.length>1?1:2).forEach(g=>pool.push({type:"gram",q:g[0],opts:g[1],ans:g[1][g[2]]}));
+  });
+  return shuffle(pool).slice(0,10);
+}
+
+/* ===== ИГРА ===== */
+let Q=[],qi=0,lives=3,right=0,cur=null,locked=false;
+function start(id){
+  const ids=id==="mix"?shuffle(TOPICS.map(t=>t.id)).slice(0,5):[id];
+  cur={id,name:id==="mix"?"🎲 Супер-игра":(()=>{const t=TOPICS.find(x=>x.id===id);return t.em+" "+t.name})()};
+  Q=makeQuestions(ids);qi=0;lives=3;right=0;
+  $("#topicName").textContent=cur.name;
+  $("#menu").classList.add("hidden");$("#game").classList.remove("hidden");
+  next();
+}
+const hearts=()=>$("#hearts").textContent="❤️".repeat(lives)+"🖤".repeat(3-lives);
+function next(){
+  hearts();locked=false;
+  $("#prog").style.width=(qi/Q.length*100)+"%";
+  if(qi>=Q.length||lives<=0)return finish();
+  const q=Q[qi],st=$("#stage");let h="";
+  if(q.type==="pic"){
+    h=`<div class="big">${q.w[0]}</div><div class="q">Как это по-английски?</div><div class="opts">${q.opts.map(o=>`<button class="opt" data-a="${o}">${o}</button>`).join("")}</div>`;
+  }else if(q.type==="ru"){
+    h=`<div class="big">${q.w[0]}</div><div class="q">Что значит «<span style="color:#7b4fd6">${q.w[1]}</span>»? <button class="btn" id="spk">🔊</button></div><div class="opts">${q.opts.map(o=>`<button class="opt" data-a="${o}">${o}</button>`).join("")}</div>`;
+  }else if(q.type==="gram"){
+    h=`<div class="big">🧩</div><div class="q">Выбери правильное слово:<br><span style="color:#7b4fd6">${q.q.replace("___","<u>&nbsp;&nbsp;&nbsp;?&nbsp;&nbsp;&nbsp;</u>")}</span></div><div class="opts">${q.opts.map(o=>`<button class="opt" data-a="${o}">${o}</button>`).join("")}</div>`;
+  }else{
+    h=`<div class="big">${q.w[0]}</div><div class="q">Напиши по-английски: «${q.w[2]}»</div><div class="hint">Подсказка: ${q.w[1].length} букв, начинается на «${q.w[1][0].toUpperCase()}»</div><br><input class="ans" id="inp" autocomplete="off" autocapitalize="off" spellcheck="false"> <br><br><button class="btn g" id="chk">Проверить ✔</button>`;
+  }
+  st.innerHTML=h+`<div class="fb" id="fb"></div>`;
+  if(q.type==="spell"){
+    const i=$("#inp");i.focus();$("#chk").onclick=check;i.onkeydown=e=>{if(e.key==="Enter")check()};
+  }else document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>pick(b));
+  const sp=$("#spk");if(sp)sp.onclick=()=>say(q.w[1]);
+}
+function norm(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,"").trim()}
+function result(ok,q){
+  const fb=$("#fb");locked=true;
+  if(ok){right++;sOk();fb.className="fb ok";fb.textContent=["Отлично! 🎉","Супер! 🌟","Правильно! 👍","Молодец! 🚀"][Math.floor(Math.random()*4)];}
+  else{lives--;sBad();fb.className="fb bad";fb.innerHTML=`Правильный ответ: <u>${q.ans}</u> 🤔`;}
+  hearts();
+  if(q.w)say(q.w[1]);
+  setTimeout(()=>{qi++;next()},ok?900:1900);
+}
+function pick(btn){
+  if(locked)return;const q=Q[qi];const ok=btn.dataset.a===q.ans;
+  btn.classList.add(ok?"ok":"bad");
+  if(!ok)document.querySelectorAll(".opt").forEach(b=>{if(b.dataset.a===q.ans)b.classList.add("ok")});
+  result(ok,q);
+}
+function check(){
+  if(locked)return;const q=Q[qi],v=$("#inp");
+  if(!v.value.trim())return;
+  const ok=norm(v.value)===norm(q.ans);v.disabled=true;
+  v.style.borderColor=ok?"#2fbf71":"#ee4d4d";
+  result(ok,q);
+}
+function finish(){
+  $("#prog").style.width="100%";
+  const win=lives>0;let s=0;
+  if(win){s=right>=10?3:right>=8?2:right>=6?1:0;}
+  const old=save[cur.id]||0;
+  if(cur.id!=="mix"&&s>old){save[cur.id]=s;store();}
+  const msg=!win?["😢","Ой, закончились жизни!","Не беда — попробуй ещё раз!"]:
+    s===3?["🏆","Чемпион! Идеально!","Ты настоящий мастер английского!"]:
+    s===2?["🥳","Отличный результат!","Ещё чуть-чуть до трёх звёзд!"]:
+    s===1?["🙂","Хорошо!","Потренируйся ещё, и будет лучше!"]:["🤗","Нужно потренироваться","Попробуй снова — у тебя получится!"];
+  $("#stage").innerHTML=`<div class="res"><div class="big">${msg[0]}</div><div class="q">${msg[1]}</div>
+    <div class="stars" style="font-size:44px">${stars(s)}</div>
+    <p>Правильных ответов: <b>${right}</b> из ${Q.length}<br>${msg[2]}</p>
+    <button class="btn g" id="again">🔁 Ещё раз</button> <button class="btn o" id="home">🏠 В меню</button></div>`;
+  $("#again").onclick=()=>start(cur.id);$("#home").onclick=renderMenu;
+  if(s>0){sWin();confetti()}
+}
+function confetti(){
+  const e=["🎉","⭐","🎈","🌟","🍭","🎊","💖"];
+  for(let i=0;i<40;i++){const d=document.createElement("div");d.className="conf";d.textContent=e[i%e.length];
+    d.style.left=Math.random()*100+"vw";d.style.animationDelay=Math.random()*1.2+"s";document.body.appendChild(d);
+    setTimeout(()=>d.remove(),4200)}
+}
+renderMenu();
+</script>
+</body>
+</html>
