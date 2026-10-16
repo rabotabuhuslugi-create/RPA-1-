@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.11">
-	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Разведка ЭПД (сборка 5)</v8:content></v8:item></Title>
+	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Разведка ЭПД (сборка 6)</v8:content></v8:item></Title>
 	<AutoCommandBar name="ФормаКоманднаяПанель" id="-1"/>
 	<ChildItems>
 		<Button name="Собрать" id="10"><Type>UsualButton</Type><CommandName>Form.Command.Собрать</CommandName><ExtendedTooltip name="СобратьРасширеннаяПодсказка" id="11"/></Button>
