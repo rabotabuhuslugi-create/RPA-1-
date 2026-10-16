@@ -14,6 +14,8 @@ if exist "%BASE%" rmdir /s /q "%BASE%"
 for %%F in ("%~dp0src\*.xml") do set "ROOTXML=%%~fF"
 set "OUT=%~dp0RazvedkaEPD.epf"
 set "LOG=%~dp0build.log"
+if exist "%OUT%" del /q "%OUT%"
+if exist "%LOG%" del /q "%LOG%"
 "%V8%" DESIGNER /F "%BASE%" /DisableStartupDialogs /LoadExternalDataProcessorOrReportFromFiles "%ROOTXML%" "%OUT%" /Out "%LOG%"
 if exist "%OUT%" (echo DONE: %OUT%) else (echo FAILED. See %LOG% & type "%LOG%")
 pause
