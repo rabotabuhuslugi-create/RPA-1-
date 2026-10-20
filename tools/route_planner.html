@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Планировщик маршрутов + Путевой лист</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;background:#f1f5f9;color:#1e293b}
+
+/* TOP BAR */
+#topbar{background:linear-gradient(90deg,#1e3a5f,#1d4ed8);padding:7px 14px;display:flex;align-items:center;gap:8px;border-bottom:3px solid #e94560;flex-shrink:0;z-index:3000;flex-wrap:wrap}
+#topbar h1{font-size:14px;font-weight:700;color:#fff;white-space:nowrap}
+#topbar h1 em{color:#fbbf24;font-style:normal}
+.tb{padding:6px 13px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;transition:.15s}
+.tb-blue{background:#2563eb;color:#fff}.tb-blue:hover{background:#1d4ed8}
+.tb-blue:disabled{background:#94a3b8;cursor:not-allowed;color:#e2e8f0}
+.tb-green{background:#16a34a;color:#fff}.tb-green:hover{background:#15803d}
+.tb-orange{background:#d97706;color:#fff}.tb-orange:hover{background:#b45309}
+.tb-gray{background:#64748b;color:#fff}.tb-gray:hover{background:#475569}
+.tb-purple{background:#7c3aed;color:#fff}.tb-purple:hover{background:#6d28d9}
+.tb-red{background:#dc2626;color:#fff}.tb-red:hover{background:#b91c1c}
+.tb.active{box-shadow:0 0 0 2px #fff6}
+#vToggle{display:flex;border:1px solid #3b82f6;border-radius:6px;overflow:hidden}
+.vb{padding:6px 12px;background:#1e40af;color:#93c5fd;border:none;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
+.vb.on{background:#fff;color:#1e3a5f}
+.vb:hover:not(.on){background:#1d4ed8;color:#fff}
+#season{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;border:none}
+.s-sum{background:#f59e0b;color:#fff}.s-win{background:#2563eb;color:#fff}
+#fuelBox{display:flex;align-items:center;gap:6px;margin-left:auto}
+#fuelBox label{font-size:11px;color:#bfdbfe;white-space:nowrap}
+#fuelPrice{width:68px;padding:5px 8px;border-radius:5px;border:1px solid #3b82f6;background:#1e40af;color:#fff;font-size:13px;font-weight:700;text-align:center}
+
+/* LAYOUT */
+#main{display:flex;flex:1;overflow:hidden}
+#mapWrap{flex:1;min-width:0;position:relative}
+#map{width:100%;height:100%}
+
+/* SIDEBAR */
+#sidebar{width:330px;background:#fff;display:flex;flex-direction:column;border-left:1px solid #e2e8f0;flex-shrink:0}
+#sTabs{display:flex;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0}
+.stab{flex:1;padding:8px 4px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;color:#64748b;border-bottom:3px solid transparent;transition:.15s}
+.stab.on{color:#1e40af;border-bottom-color:#2563eb;background:#fff}
+.stab:hover{color:#1e3a5f}
+.tpane{display:none;flex:1;overflow-y:auto;padding:10px;flex-direction:column;gap:7px}
+.tpane.on{display:flex}
+
+/* WP list */
+.wp{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f8fafc;border-radius:6px;margin-bottom:4px;border-left:3px solid #3b82f6;cursor:grab}
+.wp:hover{background:#eff6ff}
+.wn{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.wa{flex:1;font-size:11px;color:#374151;line-height:1.3}
+.wd{font-size:10px;color:#2563eb;white-space:nowrap}
+.wdel{background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:0 2px}
+
+/* Points list */
+.pt{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;margin-bottom:3px;cursor:pointer;font-size:11px}
+.pt:hover{background:#eff6ff}
+.pt.inr{border-left:3px solid #16a34a;background:#f0fdf4}
+.pdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.pcity{color:#2563eb;min-width:68px;font-size:10px}
+.paddr{flex:1;color:#374151}
+.padd{background:none;border:1px solid #cbd5e1;color:#2563eb;border-radius:3px;padding:2px 6px;cursor:pointer;font-size:10px;flex-shrink:0}
+.padd:hover{background:#2563eb;color:#fff;border-color:#2563eb}
+.padd.done{background:#dcfce7;border-color:#16a34a;color:#15803d}
+
+/* Summary */
+#sumBox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;display:none}
+#sumBox h4{font-size:11px;font-weight:700;color:#1e40af;margin-bottom:6px}
+.sr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid #dbeafe}
+.sr:last-child{border:none}
+.sl{color:#64748b}.sv{font-weight:700;color:#1e293b}
+.sv.sum{color:#b45309}.sv.win{color:#1d4ed8}.sv.cost{color:#15803d}
+
+/* Search */
+#sbox{position:relative}
+#sinp{width:100%;padding:7px 30px 7px 10px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#1e293b;font-size:12px}
+#sinp:focus{outline:none;border-color:#2563eb}
+#sclr{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;display:none}
+#sres{background:#fff;border:1px solid #e2e8f0;border-radius:6px;max-height:180px;overflow-y:auto;display:none;margin-top:3px;box-shadow:0 4px 12px #0001}
+.si{padding:7px 10px;cursor:pointer;font-size:11px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:7px;color:#374151}
+.si:hover{background:#eff6ff}
+
+/* Loading */
+#loading{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.9);color:#fff;padding:9px 18px;border-radius:20px;z-index:9000;display:none;font-size:12px;border:1px solid #3b82f6;white-space:nowrap}
+
+/* WAYBILL PANEL */
+#wbPanel{width:660px;background:#fff;display:none;flex-direction:column;border-left:2px solid #e2e8f0;flex-shrink:0}
+#wbPanel.on{display:flex}
+#wbHead{background:linear-gradient(90deg,#1e3a5f,#1d4ed8);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#wbHead h2{font-size:13px;font-weight:700;color:#fff}
+#wbScroll{flex:1;overflow-y:auto;padding:12px 14px;background:#f8fafc}
+#wbFoot{padding:10px 14px;background:#f1f5f9;border-top:1px solid #e2e8f0;flex-shrink:0}
+
+/* WB FORM */
+.wb{font-size:12px;color:#111}
+.wb h3{text-align:center;font-size:14px;font-weight:700;margin-bottom:2px}
+.wb .sub{text-align:center;font-size:9px;color:#6b7280;margin-bottom:12px}
+.sec{margin-bottom:10px}
+.stt{font-size:10px;font-weight:700;color:#1e3a5f;text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid #1e3a5f;padding-bottom:3px;margin-bottom:8px}
+.stt-row{display:flex;align-items:center;justify-content:space-between}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px}
+.f{display:flex;flex-direction:column;gap:2px}
+.f label{font-size:10px;color:#6b7280;font-weight:600}
+.f input,.f select{padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:5px;font-size:12px;width:100%;background:#fff;color:#111;transition:.2s}
+.f input:focus,.f select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px #2563eb1a}
+.f input[readonly]{background:#f8fafc;color:#475569}
+/* GREEN = needs filling */
+.f input:not([readonly]):placeholder-shown{border-color:#16a34a;background:#f0fdf4}
+.f input:not([readonly]):not(:placeholder-shown){border-color:#e2e8f0;background:#fff}
+.f select.need{border-color:#16a34a;background:#f0fdf4}
+.f select:not(.need){border-color:#e2e8f0;background:#fff}
+
+/* Org picker */
+#orgPick{display:flex;align-items:center;gap:7px;background:#f0fdf4;border:1.5px solid #16a34a;border-radius:7px;padding:7px 10px;margin-bottom:8px}
+#orgPick label{font-size:11px;font-weight:700;color:#15803d;white-space:nowrap}
+#orgSel{flex:1;padding:5px 8px;border:1px solid #bbf7d0;border-radius:5px;font-size:13px;font-weight:600;background:#fff;color:#111;cursor:pointer}
+#orgSel:focus{outline:none;border-color:#16a34a}
+
+/* Route table */
+#wbRtbl{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:7px}
+#wbRtbl th{background:#1e3a5f;color:#fff;padding:5px 7px;text-align:left;font-size:10px}
+#wbRtbl td{padding:4px 7px;border-bottom:1px solid #e5e7eb}
+#wbRtbl tr:nth-child(even) td{background:#f8fafc}
+#wbRtbl .nr{text-align:right}
+
+/* Fuel calc */
+.fcalc{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:9px 11px;font-size:11px;display:none}
+.frow{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed #dbeafe}
+.frow:last-child{border:none;font-weight:700;color:#1e3a5f;font-size:12px;padding-top:4px}
+
+/* Signs */
+.signs{display:flex;justify-content:space-between;margin-top:16px;gap:10px}
+.si2{flex:1;text-align:center;border-top:1px solid #d1d5db;padding-top:4px;font-size:10px;color:#6b7280}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#f1f5f9}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+
+/* Leaflet popup */
+.leaflet-popup-content-wrapper{background:#fff;color:#111;border:1px solid #bfdbfe;border-radius:8px;box-shadow:0 4px 16px #0002}
+.leaflet-popup-tip{background:#fff}
+.leaflet-popup-content{font-size:12px;line-height:1.6}
+.ptit{font-weight:700;color:#1e40af;margin-bottom:3px}
+
+/* ORG MODAL */
+#orgModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center}
+#orgModal.on{display:flex}
+#orgBox{background:#fff;border-radius:12px;width:660px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px #0003;overflow:hidden}
+#orgMH{background:linear-gradient(90deg,#1e3a5f,#1d4ed8);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+#orgMH h3{color:#fff;font-size:14px;font-weight:700}
+#orgMCl{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1}
+#orgMB{flex:1;overflow-y:auto;padding:14px 16px;background:#f9fafb}
+#orgMF{padding:10px 16px;background:#f1f5f9;border-top:1px solid #e5e7eb;display:flex;gap:8px;align-items:center}
+#orgAddF{background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:12px;margin-bottom:12px}
+#orgAddF .ah{font-size:12px;font-weight:700;color:#1e40af;margin-bottom:9px}
+#orgAddF .ag{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+#orgAddF label{font-size:10px;color:#6b7280;font-weight:600;display:block;margin-bottom:2px}
+#orgAddF input{width:100%;padding:5px 8px;border:1px solid #bfdbfe;border-radius:4px;font-size:12px}
+#orgAddF input:focus{outline:none;border-color:#2563eb}
+#orgTbl{width:100%;border-collapse:collapse;font-size:12px}
+#orgTbl th{background:#1e3a5f;color:#fff;padding:6px 8px;text-align:left;font-size:11px}
+#orgTbl td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:middle}
+#orgTbl tr:nth-child(even) td{background:#f8fafc}
+#orgTbl tr:hover td{background:#eff6ff}
+#orgTbl input{width:100%;border:1px solid #e2e8f0;border-radius:3px;padding:3px 5px;font-size:11px}
+
+@keyframes pulse-green{
+  0%{box-shadow:0 4px 18px rgba(22,163,74,.55)}
+  50%{box-shadow:0 4px 28px rgba(22,163,74,.9),0 0 0 6px rgba(22,163,74,.15)}
+  100%{box-shadow:0 4px 18px rgba(22,163,74,.55)}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>🗺 <em>Планировщик</em> + Путевой лист</h1>
+  <div id="vToggle">
+    <button class="vb on" id="vM" onclick="setView('map')">🗺 Карта</button>
+    <button class="vb" id="vS" onclick="setView('split')">⊞ Оба</button>
+    <button class="vb" id="vW" onclick="setView('wb')">📄 Путевой лист</button>
+    <button class="vb" id="vI" onclick="setView('info')">📖 Инструкция</button>
+  </div>
+  <button class="tb tb-blue active" id="btnP" onclick="togglePlanner()">📍 Планировщик</button>
+  <button class="tb tb-green" id="btnB" disabled onclick="buildRoute()">🗺 Построить</button>
+  <button class="tb tb-orange" id="btnO" disabled onclick="optimizeRoute()">⚡ Оптимизировать</button>
+  <button class="tb tb-gray" id="btnC" disabled onclick="clearAll()">🗑 Очистить</button>
+  <button id="season" class="s-sum" onclick="toggleSeason()">☀ Лето</button>
+  <div id="fuelBox">
+    <select id="mapFuelType" onchange="onMapFuelChange(this)" style="padding:5px 8px;border-radius:5px;border:1px solid #3b82f6;background:#1e40af;color:#fff;font-size:12px;font-weight:700;cursor:pointer;max-width:130px">
+      <option value="АИ-92"  data-price="64.5">АИ-92</option>
+      <option value="АИ-95"  data-price="69.7" selected>АИ-95</option>
+      <option value="АИ-98"  data-price="76.0">АИ-98</option>
+      <option value="АИ-100" data-price="82.0">АИ-100</option>
+      <option value="ДТ"     data-price="68.5">ДТ</option>
+      <option value="ДТ Зимнее" data-price="70.0">ДТ зимнее</option>
+      <option value="СУГ"    data-price="32.0">СУГ</option>
+      <option value="КПГ"    data-price="28.0">КПГ</option>
+    </select>
+    <label id="fuelPriceLabel" style="font-size:11px;color:#bfdbfe;white-space:nowrap">руб/л:</label>
+    <input id="fuelPrice" type="number" value="69.7" min="1" step="0.1" onchange="onPriceChange()" style="width:68px;padding:5px 8px;border-radius:5px;border:1px solid #3b82f6;background:#1e40af;color:#fff;font-size:13px;font-weight:700;text-align:center">
+  </div>
+  <button class="tb" onclick="openStartModal()" style="background:#22c55e;color:#fff;font-size:12px;padding:5px 11px;border-radius:5px;border:none;cursor:pointer;font-weight:700;white-space:nowrap" title="Изменить точку выезда">📍 Точка выезда</button>
+</div>
+
+<div id="main">
+  <!-- MAP -->
+  <div id="mapWrap">
+    <div id="map"></div>
+    <div id="loading">⏳ <span id="lmsg">Строим маршрут...</span> <span id="lprog" style="color:#93c5fd"></span></div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sTabs">
+      <div class="stab on" onclick="showTab('r')">📋 Маршрут</div>
+      <div class="stab" onclick="showTab('p')">📍 Все точки</div>
+    </div>
+
+    <div class="tpane on" id="tp-r">
+      <div id="sbox">
+        <input id="sinp" type="text" placeholder="🔍 Поиск магазина по городу или адресу..." oninput="doSearch(this.value)">
+        <button id="sclr" onclick="clearSearch()">×</button>
+        <div id="sres"></div>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;padding:1px 2px">💡 Кликайте по точкам на карте или ищите выше</div>
+      <div id="wpList"><p style="color:#94a3b8;font-size:11px">Добавьте точки маршрута</p></div>
+      <div id="sumBox">
+        <h4>📊 Итоги маршрута</h4>
+        <div class="sr"><span class="sl">Пробег туда-обратно:</span><span class="sv" id="sDist">—</span></div>
+        <div class="sr"><span class="sl">Расход (<span id="sSL">лето</span>):</span><span class="sv sum" id="sFuel">—</span></div>
+        <div class="sr"><span class="sl">Стоимость топлива:</span><span class="sv cost" id="sCost">—</span></div>
+        <div class="sr"><span class="sl">Точек в маршруте:</span><span class="sv" id="sPts">—</span></div>
+      </div>
+      <div id="sendWrap" style="margin-top:auto;padding:0">
+      <button id="btnSend" disabled onclick="sendToWB()" style="
+        width:100%;padding:12px 16px;border:none;border-radius:8px;cursor:pointer;
+        font-size:14px;font-weight:700;color:#fff;
+        background:linear-gradient(135deg,#16a34a,#15803d);
+        box-shadow:0 4px 14px rgba(22,163,74,.4);
+        transition:all .2s;letter-spacing:.3px;
+        opacity:.4;pointer-events:none;
+        display:flex;align-items:center;justify-content:center;gap:8px
+      ">
+        <span style="font-size:18px">📋</span>
+        <span>Перенести в путевой лист</span>
+        <span style="font-size:16px">→</span>
+      </button>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button id="btnGPX" disabled onclick="exportGPX()" style="flex:1;padding:7px;border:1px solid #3b82f6;border-radius:6px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;cursor:pointer;opacity:.4;pointer-events:none">🗺 Скачать GPX</button>
+        <button onclick="saveTemplate(this)" style="flex:1;padding:7px;border:1px solid #7c3aed;border-radius:6px;background:#f5f3ff;color:#5b21b6;font-size:11px;font-weight:700;cursor:pointer">💾 Шаблон</button>
+      </div>
+    </div>
+    </div>
+
+    <div class="tpane" id="tp-p">
+      <div style="font-size:10px;color:#94a3b8;margin-bottom:2px">Кликните «+» или по точке на карте</div>
+      <div id="allPts"></div>
+    </div>
+  </div>
+
+  <!-- WAYBILL -->
+  <div id="wbPanel">
+    <div id="wbHead">
+      <h2>📄 Путевой лист легкового автомобиля</h2>
+      <button class="tb tb-gray" style="font-size:11px;padding:5px 10px" onclick="clearWB()">🔄 Сбросить</button>
+    </div>
+    <div id="wbScroll">
+      <div class="wb">
+        <h3>ПУТЕВОЙ ЛИСТ ЛЕГКОВОГО АВТОМОБИЛЯ</h3>
+        <p class="sub">Форма ОКУД 0345001 (форма №3) · Нормы Минтранса РФ Распоряжение №АМ-23-р</p>
+
+        <!-- ОРГАНИЗАЦИЯ -->
+        <div class="sec">
+          <div class="stt stt-row">
+            <span>Организация</span>
+            <button onclick="openOrgModal()" style="padding:3px 10px;background:#2563eb;color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">📋 Справочник</button>
+          </div>
+          <div id="orgPick">
+            <label>Организация:</label>
+            <select id="orgSel" onchange="applyOrg(this)">
+              <option value="">— выберите из справочника —</option>
+            </select>
+          </div>
+          <div class="g2">
+            <div class="f"><label>Наименование организации / ИП</label><input id="wb_org" placeholder="ООО «Название»" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Телефон</label><input id="wb_phone" placeholder="+7 (861) 000-00-00" oninput="onWBInput(this)"></div>
+          </div>
+          <div class="g3">
+            <div class="f"><label>ИНН</label><input id="wb_inn" placeholder="0000000000" oninput="onWBInput(this)"></div>
+            <div class="f"><label>КПП</label><input id="wb_kpp" placeholder="000000000" oninput="onWBInput(this)"></div>
+            <div class="f"><label>ОГРН / ЕГРИП</label><input id="wb_ogrn" placeholder="0000000000000" oninput="onWBInput(this)"></div>
+          </div>
+          <div class="g2" style="margin-bottom:0">
+            <div class="f"><label>Юр. адрес</label><input id="wb_addr" placeholder="350038, Краснодарский край, г. Краснодар..." oninput="onWBInput(this)"></div>
+            <div class="f"><label>ОКПО</label><input id="wb_okpo" placeholder="00000000" oninput="onWBInput(this)"></div>
+          </div>
+          <div class="g3">
+            <div class="f"><label>№ путевого листа</label><input id="wb_num" placeholder="1 / 001" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Дата выдачи</label><input id="wb_date" type="date" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Период (с — по)</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                <input id="wb_pf" type="date" oninput="onWBInput(this)">
+                <input id="wb_pt" type="date" oninput="onWBInput(this)">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ТС -->
+        <div class="sec">
+          <div class="stt stt-row">
+            <span>Транспортное средство</span>
+            <button onclick="openVehModal()" style="padding:3px 10px;background:#d97706;color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">🚗 Справочник ТС</button>
+          </div>
+          <div id="vehPick" style="display:flex;align-items:center;gap:7px;background:#fff7ed;border:1.5px solid #d97706;border-radius:7px;padding:7px 10px;margin-bottom:8px">
+            <label style="font-size:11px;font-weight:700;color:#92400e;white-space:nowrap">Выбрать ТС:</label>
+            <select id="vehSel" onchange="applyVeh(this)" style="flex:1;padding:5px 8px;border:1px solid #fcd34d;border-radius:5px;font-size:13px;font-weight:600;background:#fff;color:#111;cursor:pointer">
+              <option value="">— выберите из справочника ТС —</option>
+            </select>
+            <button onclick="openVehModal()" style="padding:5px 10px;background:#d97706;color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">+ Добавить</button>
+          </div>
+          <div class="g3">
+            <div class="f"><label>Марка / модель</label><input id="wb_car" placeholder="Марка, модель" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Гос. номер</label><input id="wb_plate" placeholder="А 000 АА 00" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Гаражный номер</label><input id="wb_garage" placeholder="001" oninput="onWBInput(this)"></div>
+          </div>
+          <div class="g3">
+            <div class="f"><label>Год выпуска</label><input id="wb_year" type="number" placeholder="2018" oninput="onWBInput(this)"></div>
+            <div class="f"><label>VIN / Рег. знак прицепа</label><input id="wb_vin" placeholder="XXXXXXXXXXXXXXXXX" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Тип ТС</label><input id="wb_vtype" placeholder="Грузовой, легковой..." oninput="onWBInput(this)"></div>
+          </div>
+          <div class="g3">
+            <div class="f"><label>Спидометр нач., км</label><input id="wb_odo_s" type="number" placeholder="00000" oninput="onWBInput(this);calcOdo();autoK5()"></div>
+            <div class="f"><label>Спидометр кон., км (авто)</label><input id="wb_odo_e" readonly placeholder="—"></div>
+            <div class="f"><label>Топливо в баке нач., л</label><input id="wb_fs" type="number" step="0.1" placeholder="45.0" oninput="onWBInput(this);recalcFuel()"></div>
+          </div>
+        </div>
+
+        <!-- ВОДИТЕЛЬ -->
+        <div class="sec">
+          <div class="stt">Водитель</div>
+          <div class="g3">
+            <div class="f"><label>ФИО водителя</label><input id="wb_drv" placeholder="Фамилия Имя Отчество" oninput="onWBInput(this);updSigns()"></div>
+            <div class="f"><label>Удостоверение №</label><input id="wb_lic" placeholder="00 АА 000000" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Категория</label>
+              <select id="wb_cat" class="need" onchange="onSelChange(this)">
+                <option value="">— выбрать —</option>
+                <option>B</option><option>C</option><option>D</option><option>BE</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- МАРШРУТ -->
+        <div class="sec">
+          <div class="stt stt-row">
+            <span>Маршрут следования</span>
+            <span id="wbBadge" style="display:none;font-size:9px;padding:2px 8px;border-radius:10px;background:#dcfce7;color:#166534;font-weight:700">✓ Из планировщика</span>
+          </div>
+          <table id="wbRtbl">
+            <thead><tr><th>#</th><th>Пункт назначения</th><th style="width:80px">Расст., км</th><th style="width:80px">Накопл., км</th></tr></thead>
+            <tbody id="wbRbody"><tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:14px;font-size:11px">Постройте маршрут и нажмите «Перенести в путевой лист»</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- ТОПЛИВО -->
+        <div class="sec">
+          <div class="stt">Расчёт расхода топлива (Распоряжение Минтранса РФ №АМ-23-р)</div>
+          <div class="g3">
+            <div class="f"><label>Вид топлива</label>
+              <select id="wb_fuel_type" class="need" onchange="onSelChange(this)">
+                <option value="">— выбрать —</option>
+                <option value="АИ-92">АИ-92 (бензин)</option>
+                <option value="АИ-95" selected>АИ-95 (бензин)</option>
+                <option value="АИ-98">АИ-98 (бензин)</option>
+                <option value="АИ-100">АИ-100 (бензин)</option>
+                <option value="ДТ">Дизельное топливо (ДТ)</option>
+                <option value="ДТ Зимнее">ДТ зимнее</option>
+                <option value="СУГ">СУГ (пропан-бутан)</option>
+                <option value="КПГ">КПГ (метан)</option>
+              </select>
+            </div>
+            <div class="f"><label>Цена топлива, руб/л</label><input id="wb_price" type="number" step="0.1" placeholder="69.7" oninput="recalcFuel()"></div>
+            <div class="f"><label>Базовая норма Hs, л/100 км</label><input id="wb_hs" type="number" step="0.1" placeholder="9.0" oninput="onWBInput(this);recalcFuel()"></div>
+          </div>
+          <div class="g3">
+            <div class="f"><label>Сезонная надбавка</label>
+              <select id="wb_k1" class="need" onchange="onSelChange(this);recalcFuel()">
+                <option value="0">Лето — 0%</option>
+                <option value="10">Зима умеренный — +10%</option>
+                <option value="15">Зима холодный — +15%</option>
+                <option value="20">Зима суровый — +20%</option>
+                <option value="25">Зима оч. суровый — +25%</option>
+              </select>
+            </div>
+            <div class="f"><label>Городская надбавка <span id="k3AutoBadge" style="display:none;font-size:9px;padding:1px 5px;background:#0ea5e9;color:#fff;border-radius:8px;font-weight:700">авто</span></label>
+              <select id="wb_k3" onchange="onSelChange(this);recalcFuel()" style="background:#f0f9ff;border-color:#7dd3fc">
+                <option value="0">Сельская — 0%</option>
+                <option value="5">Малый город &lt;100 тыс — +5%</option>
+                <option value="10">100–250 тыс — +10%</option>
+                <option value="15">250–1000 тыс — +15%</option>
+                <option value="25">Мегаполис &gt;1 млн — +25%</option>
+              </select>
+              <div id="wb_k3_auto" style="font-size:10px;color:#0369a1;margin-top:2px;display:none">⚙ авто из маршрута</div>
+            </div>
+            <div class="f">
+              <label>Возрастная надбавка К5, %
+                <span id="k5AutoBadge" style="display:none;font-size:9px;padding:1px 5px;background:#7c3aed;color:#fff;border-radius:8px;font-weight:700">авто</span>
+              </label>
+              <select id="wb_k5" onchange="onK5Change(this);recalcFuel()" style="padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:5px;font-size:12px;width:100%;background:#fff">
+                <option value="0">0% — авто до 5 лет</option>
+                <option value="5">+5% — авто 5–8 лет</option>
+                <option value="10">+10% — авто старше 8 лет</option>
+              </select>
+              <div id="wb_k5_hint" style="font-size:10px;color:#7c3aed;margin-top:2px;display:none"></div>
+            </div>
+            <div class="f">
+              <label>Надбавка А/С и климат К4, %
+                <span id="k4AutoBadge" style="display:none;font-size:9px;padding:1px 5px;background:#0ea5e9;color:#fff;border-radius:8px;font-weight:700">авто</span>
+              </label>
+              <select id="wb_k4" onchange="recalcFuel()" style="padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:5px;font-size:12px;width:100%;background:#fff">
+                <option value="0">0% — без А/С (зима)</option>
+                <option value="5">+5% — кондиционер лето</option>
+                <option value="7">+7% — климат-контроль</option>
+              </select>
+            </div>
+            <div class="f"><label>Прочие надбавки Кх, %</label><input id="wb_kx" type="number" value="0" min="0" step="1" placeholder="0" oninput="recalcFuel()"></div>
+          </div>
+          <div class="g2" style="margin-bottom:8px">
+            <div class="f"><label>Итоговая норма Hн, л/100 км (авто)</label><input id="wb_hn" readonly placeholder="—"></div>
+            <div class="f"><label>Общий пробег L, км (авто)</label><input id="wb_km" readonly placeholder="—"></div>
+          </div>
+          <div class="fcalc" id="fcalc">
+            <div style="font-size:10px;font-weight:700;color:#1e40af;margin-bottom:5px">Надбавки D к базовой норме Hs:</div>
+            <div id="fc_breakdown" style="font-size:11px;color:#374151;margin-bottom:7px;background:#f0f9ff;border-radius:4px;padding:5px 8px"></div>
+            <div class="frow"><span>Итоговая норма Hн = Hs × (1 + D/100)</span><span id="fc_hn_disp" style="color:#1e3a5f;font-weight:700">—</span></div>
+            <div class="frow"><span>Общий пробег L</span><span id="fc_km_disp">—</span></div>
+            <div class="frow" style="background:#fff8e1;padding:4px 6px;border-radius:4px"><span><b>Qн = 0.01 × Hн × L</b></span><span id="fc_qn" style="font-size:13px;font-weight:700;color:#1e3a5f">—</span></div>
+            <div class="frow"><span>Стоимость топлива</span><span id="fc_cost" style="color:#15803d;font-weight:700">—</span></div>
+            <div class="frow"><span>Топливо в баке нач.</span><span id="fc_fs">—</span></div>
+            <div class="frow"><span>⛽ Остаток в баке (расч.)</span><span id="fc_rem">—</span></div>
+          </div>
+        </div>
+
+        <!-- ОТМЕТКИ -->
+        <div class="sec">
+          <div class="stt">Отметки</div>
+          <div class="g2" style="margin-bottom:7px">
+            <div class="f"><label>Механик (ФИО)</label><input id="wb_mech" placeholder="Фамилия И.О." oninput="onWBInput(this);updSigns()"></div>
+            <div class="f"><label>Состояние ТС</label>
+              <select id="wb_mok" class="need" onchange="onSelChange(this)">
+                <option value="">— выбрать —</option>
+                <option>Технически исправен, выезд разрешён</option>
+                <option>Требует ремонта, выезд запрещён</option>
+              </select>
+            </div>
+          </div>
+          <div class="g3">
+            <div class="f"><label>Диспетчер (ФИО)</label><input id="wb_disp" placeholder="Фамилия И.О." oninput="onWBInput(this);updSigns()"></div>
+            <div class="f"><label>Время выезда</label><input id="wb_tout" type="time" oninput="onWBInput(this)"></div>
+            <div class="f"><label>Время возврата</label><input id="wb_tin" type="time" oninput="onWBInput(this)"></div>
+          </div>
+        </div>
+
+        <div class="signs">
+          <div class="si2">Водитель<br><b id="sg_drv"></b></div>
+          <div class="si2">Механик<br><b id="sg_mech"></b></div>
+          <div class="si2">Диспетчер<br><b id="sg_disp"></b></div>
+        </div>
+        <p style="margin-top:10px;font-size:8px;color:#9ca3af;text-align:center">Расчёт по Распоряжению Минтранса РФ №АМ-23-р от 14.03.2008</p>
+      </div>
+    </div>
+    <div id="wbFoot">
+      <button class="tb tb-blue" style="width:100%;font-size:13px;padding:10px" onclick="printWB()">🖨 Распечатать путевой лист</button>
+    </div>
+  </div>
+
+  <!-- INSTRUCTION PANEL -->
+  <div id="infoPanel" style="display:none;flex:1;overflow-y:auto;background:#f8fafc;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#1e293b">
+    <style>
+#infoPanel{width:100%;box-sizing:border-box}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:14px;line-height:1.6;background:#f8fafc;color:#1e293b}
+#infoPanel .wrap{max-width:960px;margin:0 auto;padding:32px 24px}
+
+/* HEADER */
+#infoPanel .hero{background:linear-gradient(135deg,#1e3a5f,#1d4ed8);color:#fff;border-radius:12px;padding:32px 36px;margin-bottom:32px;display:flex;align-items:center;gap:24px}
+#infoPanel .hero-icon{font-size:52px;flex-shrink:0}
+#infoPanel .hero h1{font-size:24px;font-weight:700;margin-bottom:6px}
+#infoPanel .hero p{font-size:14px;color:#bfdbfe;line-height:1.5}
+
+/* TOC */
+#infoPanel .toc{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:32px}
+#infoPanel .toc h2{font-size:14px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+#infoPanel .toc ol{padding-left:20px}
+#infoPanel .toc li{margin-bottom:5px}
+#infoPanel .toc a{color:#2563eb;text-decoration:none;font-size:13px}
+#infoPanel .toc a:hover{text-decoration:underline}
+
+/* SECTIONS */
+#infoPanel .section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px 28px;margin-bottom:20px}
+#infoPanel .section-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:#1d4ed8;color:#fff;border-radius:50%;font-size:14px;font-weight:700;flex-shrink:0;margin-right:10px}
+#infoPanel .section h2{font-size:18px;font-weight:700;color:#1e3a5f;display:flex;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
+#infoPanel .section h3{font-size:14px;font-weight:700;color:#374151;margin:16px 0 8px}
+
+/* STEPS */
+#infoPanel .steps{counter-reset:step;list-style:none;padding:0}
+#infoPanel .steps li{display:flex;gap:12px;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:3px solid #3b82f6}
+#infoPanel .steps li::before{counter-increment:step;content:counter(step);display:flex;align-items:center;justify-content:center;min-width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+#infoPanel .steps li .txt{flex:1}
+
+/* TIPS */
+#infoPanel .tip{display:flex;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px}
+#infoPanel .tip-icon{font-size:18px;flex-shrink:0;line-height:1.3}
+#infoPanel .warn{background:#fff7ed;border-color:#fed7aa}
+#infoPanel .warn .tip-icon::before{content:"⚠️"}
+#infoPanel .tip-green{background:#f0fdf4;border-color:#bbf7d0}
+#infoPanel .tip-green .tip-icon::before{content:"✅"}
+
+/* BUTTONS */
+#infoPanel .btn-demo{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:12px;font-weight:700;white-space:nowrap;vertical-align:middle}
+#infoPanel .btn-blue{background:#2563eb;color:#fff}
+#infoPanel .btn-green{background:#16a34a;color:#fff}
+#infoPanel .btn-orange{background:#d97706;color:#fff}
+#infoPanel .btn-gray{background:#64748b;color:#fff}
+#infoPanel .btn-purple{background:#7c3aed;color:#fff}
+#infoPanel .btn-lime{background:#22c55e;color:#fff}
+#infoPanel .btn-red{background:#dc2626;color:#fff}
+#infoPanel .btn-teal{background:#0d9488;color:#fff}
+
+/* FIELD */
+#infoPanel .field-badge{display:inline-block;padding:2px 8px;border:1.5px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:4px;font-size:11px;font-weight:700}
+#infoPanel .field-auto{display:inline-block;padding:2px 8px;border:1.5px solid #2563eb;background:#eff6ff;color:#1d4ed8;border-radius:4px;font-size:11px;font-weight:700}
+
+/* FLOW CHART */
+#infoPanel .flow{display:flex;align-items:stretch;gap:0;margin:16px 0;flex-wrap:wrap}
+#infoPanel .flow-step{background:#1e3a5f;color:#fff;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;text-align:center;min-width:100px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+#infoPanel .flow-step .fi{font-size:20px}
+#infoPanel .flow-arr{display:flex;align-items:center;padding:0 4px;color:#94a3b8;font-size:20px;font-weight:700}
+#infoPanel .flow-step.alt{background:#f0fdf4;color:#15803d;border:2px solid #16a34a}
+
+/* TABLE */
+#infoPanel table.info{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+#infoPanel table.info th{background:#1e3a5f;color:#fff;padding:8px 12px;text-align:left;font-weight:700;font-size:12px}
+#infoPanel table.info td{padding:7px 12px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+#infoPanel table.info tr:nth-child(even) td{background:#f8fafc}
+#infoPanel table.info td:first-child{font-weight:700;color:#1e3a5f;white-space:nowrap;width:160px}
+
+/* KEY */
+#infoPanel kbd{display:inline-block;padding:2px 6px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;font-family:monospace;font-size:12px;color:#374151}
+
+
+  #infoPanel .hero{break-inside:avoid}
+  #infoPanel .section{break-inside:avoid;border:1px solid #ccc}
+  a{color:#000}
+}
+
+#infoPanel .wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+#infoPanel h1{font-size:22px}
+#infoPanel h2{font-size:16px}
+    </style>
+    <div class="wrap">
+      <div class="wrap">
+
+<div class="hero">
+  <div class="hero-icon">🗺</div>
+  <div>
+    <h1>Планировщик маршрутов + Путевой лист</h1>
+    <p>Подробная инструкция пользователя · Версия 1.0 · 2026<br>
+    Расчёт расхода топлива по нормам Минтранса РФ (Распоряжение №АМ-23-р)</p>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Содержание</h2>
+  <ol>
+    <li><a href="#s1">Быстрый старт — как оформить путевой лист за 5 минут</a></li>
+    <li><a href="#s2">Интерфейс — что где находится</a></li>
+    <li><a href="#s3">Планировщик маршрута</a></li>
+    <li><a href="#s4">Точка выезда</a></li>
+    <li><a href="#s5">Настройка топлива и цены</a></li>
+    <li><a href="#s6">Перенос маршрута в путевой лист</a></li>
+    <li><a href="#s7">Справочник организаций</a></li>
+    <li><a href="#s8">Справочник транспортных средств</a></li>
+    <li><a href="#s9">Заполнение путевого листа вручную</a></li>
+    <li><a href="#s10">Печать путевого листа</a></li>
+    <li><a href="#s11">Расчёт расхода топлива — как работает</a></li>
+    <li><a href="#s12">Часто задаваемые вопросы</a></li>
+  </ol>
+</div>
+
+<!-- S1 -->
+<div class="section" id="s1">
+  <h2><span class="section-num">1</span>Быстрый старт — за 5 минут</h2>
+  <div class="flow">
+    <div class="flow-step"><div class="fi">📍</div>Добавьте точки на карте</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-step"><div class="fi">🗺</div>Нажмите «Построить»</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-step"><div class="fi">📋</div>Нажмите «Перенести в путевой лист»</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-step alt"><div class="fi">✏️</div>Заполните зелёные поля</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-step alt"><div class="fi">🖨</div>Распечатайте</div>
+  </div>
+  <ol class="steps">
+    <li><div class="txt"><strong>Откройте файл</strong> <code>Маршрут_Путевой лист.html</code> в браузере (Chrome, Edge или Firefox). Интернет нужен только для загрузки карты и построения маршрута.</div></li>
+    <li><div class="txt"><strong>Кликайте по цветным точкам</strong> на карте — это магазины. Выбранные точки нумеруются и появляются в правой панели «Маршрут».</div></li>
+    <li><div class="txt"><strong>Нажмите <span class="btn-demo btn-green">🗺 Построить</span></strong> — программа проложит реальный маршрут по дорогам и посчитает километраж и расход топлива.</div></li>
+    <li><div class="txt"><strong>Нажмите большую зелёную кнопку <span class="btn-demo btn-green">📋 Перенести в путевой лист</span></strong> — маршрут с километрами автоматически перейдёт в путевой лист.</div></li>
+    <li><div class="txt"><strong>Переключитесь на вид <span class="btn-demo btn-blue">📄 Путевой лист</span></strong> и заполните <span class="field-badge">зелёные поля</span> (организация, водитель, ТС). Зелёный цвет означает, что поле ещё не заполнено.</div></li>
+    <li><div class="txt"><strong>Нажмите <span class="btn-demo btn-blue">🖨 Распечатать путевой лист</span></strong> — откроется окно печати.</div></li>
+  </ol>
+</div>
+
+<!-- S2 -->
+<div class="section" id="s2">
+  <h2><span class="section-num">2</span>Интерфейс — что где находится</h2>
+
+  <h3>🔵 Верхняя панель (топбар)</h3>
+  <table class="info">
+    <tr><th>Элемент</th><th>Описание</th></tr>
+    <tr><td><span class="btn-demo btn-blue">🗺 Карта</span> / <span class="btn-demo btn-blue">⊞ Оба</span> / <span class="btn-demo btn-blue">📄 Путевой лист</span></td><td>Переключение режима отображения: только карта, карта + путевой лист рядом, только путевой лист</td></tr>
+    <tr><td><span class="btn-demo btn-blue">📍 Планировщик</span></td><td>Включает/выключает режим добавления точек кликом по карте</td></tr>
+    <tr><td><span class="btn-demo btn-green">🗺 Построить</span></td><td>Прокладывает маршрут через все выбранные точки по реальным дорогам</td></tr>
+    <tr><td><span class="btn-demo btn-orange">⚡ Оптимизировать</span></td><td>Автоматически меняет порядок объезда точек на более короткий</td></tr>
+    <tr><td><span class="btn-demo btn-gray">🗑 Очистить</span></td><td>Убирает все точки и маршрут с карты</td></tr>
+    <tr><td>☀ Лето / ❄ Зима</td><td>Сезон для расчёта расхода топлива (зимняя надбавка по АМ-23-р)</td></tr>
+    <tr><td>Список топлива + цена</td><td>Выбор вида топлива (АИ-92, АИ-95, ДТ…) и его цена за литр</td></tr>
+    <tr><td><span class="btn-demo btn-lime">📍 Точка выезда</span></td><td>Изменить место, откуда начинается маршрут</td></tr>
+  </table>
+
+  <h3>🟦 Правая боковая панель (при виде «Карта» и «Оба»)</h3>
+  <table class="info">
+    <tr><td>📋 Маршрут</td><td>Список выбранных точек, итоги маршрута, кнопка переноса в путевой лист</td></tr>
+    <tr><td>📍 Все точки</td><td>Полный список всех магазинов — можно добавлять кнопкой «+»</td></tr>
+    <tr><td>🔍 Поиск</td><td>Поиск магазина по городу или адресу</td></tr>
+  </table>
+
+  <h3>📄 Путевой лист (правая колонка или отдельный вид)</h3>
+  <p>Форма путевого листа по форме ОКУД 0345001. <span class="field-badge">Зелёные поля</span> — нужно заполнить. <span class="field-auto">Синие авто</span> — заполняются автоматически.</p>
+</div>
+
+<!-- S3 -->
+<div class="section" id="s3">
+  <h2><span class="section-num">3</span>Планировщик маршрута</h2>
+
+  <h3>Добавление точек</h3>
+  <ol class="steps">
+    <li><div class="txt"><strong>Кликните по цветной точке</strong> на карте — она добавится в маршрут и получит номер. Повторный клик — удалит точку из маршрута.</div></li>
+    <li><div class="txt">Или воспользуйтесь <strong>поиском</strong> в правой панели: начните вводить название города или адрес → выберите из списка.</div></li>
+    <li><div class="txt">Или перейдите на вкладку <strong>«📍 Все точки»</strong> и нажмите «+» напротив нужного магазина.</div></li>
+  </ol>
+
+  <div class="tip"><div class="tip-icon">💡</div><div>Цвет точки на карте означает тип населённого пункта: <strong style="color:#3b82f6">синий</strong> — Краснодар (мегаполис), <strong style="color:#f97316">оранжевый</strong> — средний город (Сочи, Геленджик, Новороссийск), <strong style="color:#e94560">красный</strong> — малый город или сельское поселение. Это важно для расчёта городской надбавки.</div></div>
+
+  <h3>Изменение порядка точек</h3>
+  <ul style="padding-left:20px;margin:8px 0">
+    <li style="margin-bottom:6px"><strong>Перетаскивание</strong> — возьмите знак <kbd>⠿</kbd> слева от точки в панели маршрута и перетащите выше или ниже</li>
+    <li><strong>Автооптимизация</strong> — нажмите <span class="btn-demo btn-orange">⚡ Оптимизировать</span>, система автоматически найдёт более короткий порядок объезда</li>
+  </ul>
+
+  <h3>Построение маршрута</h3>
+  <p>После добавления всех точек нажмите <span class="btn-demo btn-green">🗺 Построить</span>. Программа строит маршрут по реальным дорогам (требуется интернет). На карте появятся цветные линии с подписями километража.</p>
+
+  <div class="tip warn"><div class="tip-icon"></div><div>Построение маршрута может занять несколько секунд — зависит от количества точек. Прогресс виден внизу карты. При большом количестве точек (более 15) рекомендуется использовать «Оптимизировать» до построения.</div></div>
+
+  <h3>Итоги маршрута</h3>
+  <p>После построения в правой панели появится блок с итогами: общий пробег (туда-обратно), расход топлива в литрах, стоимость топлива и количество точек.</p>
+</div>
+
+<!-- S4 -->
+<div class="section" id="s4">
+  <h2><span class="section-num">4</span>Точка выезда</h2>
+  <p>По умолчанию маршрут начинается с <strong>Краснодар, ул. Им. Володарского, 8/1</strong> (зелёный маркер «S» на карте).</p>
+
+  <h3>Как изменить точку выезда</h3>
+  <ol class="steps">
+    <li><div class="txt">Нажмите <span class="btn-demo btn-lime">📍 Точка выезда</span> в верхней панели — откроется окно выбора.</div></li>
+    <li><div class="txt"><strong>Быстрый выбор</strong>: нажмите одну из готовых кнопок (ул. Красная, ул. Ставропольская, Сочи, Новороссийск и др.).</div></li>
+    <li><div class="txt"><strong>Вручную</strong>: введите адрес, выберите тип города и укажите координаты (широту и долготу). Координаты можно скопировать из Яндекс.Карт или Google Maps — нажмите правой кнопкой мыши на карте → «Скопировать координаты».</div></li>
+    <li><div class="txt">Нажмите <span class="btn-demo btn-green">✓ Применить</span>. Зелёный маркер переместится на новое место.</div></li>
+  </ol>
+
+  <div class="tip tip-green"><div class="tip-icon"></div><div><strong>Совет:</strong> Маркер «S» на карте можно просто <strong>перетащить мышью</strong> в любое место — точка выезда изменится автоматически. Если маршрут уже был построен, он перестроится с новой точки.</div></div>
+</div>
+
+<!-- S5 -->
+<div class="section" id="s5">
+  <h2><span class="section-num">5</span>Настройка топлива и цены</h2>
+  <table class="info">
+    <tr><th>Поле</th><th>Описание</th></tr>
+    <tr><td>Список топлива</td><td>Выберите вид топлива: АИ-92, АИ-95, АИ-98, АИ-100, ДТ, ДТ зимнее, СУГ, КПГ. При выборе цена подставляется автоматически.</td></tr>
+    <tr><td>Цена, руб/л</td><td>Актуальная цена топлива. Измените при необходимости — стоимость маршрута пересчитается мгновенно.</td></tr>
+    <tr><td>☀ Лето / ❄ Зима</td><td>Сезон влияет на надбавку к норме расхода (зима: +10% для умеренного климата Краснодарского края). Переключайте кнопкой в шапке.</td></tr>
+  </table>
+  <div class="tip"><div class="tip-icon">💡</div><div>Все эти настройки <strong>автоматически переносятся в путевой лист</strong> при нажатии «Перенести в путевой лист».</div></div>
+</div>
+
+<!-- S6 -->
+<div class="section" id="s6">
+  <h2><span class="section-num">6</span>Перенос маршрута в путевой лист</h2>
+  <ol class="steps">
+    <li><div class="txt">Постройте маршрут (кнопка <span class="btn-demo btn-green">🗺 Построить</span>).</div></li>
+    <li><div class="txt">Нажмите большую зелёную кнопку <strong>«📋 Перенести в путевой лист»</strong> внизу правой панели. Кнопка активна только после построения маршрута и начинает пульсировать, привлекая внимание.</div></li>
+    <li><div class="txt">Программа автоматически заполнит в путевом листе:</div></li>
+  </ol>
+
+  <table class="info" style="margin-top:8px">
+    <tr><th>Поле</th><th>Что подставляется</th></tr>
+    <tr><td>Маршрут следования</td><td>Все точки с адресами, расстоянием до каждой и накопленным километражем</td></tr>
+    <tr><td>Общий пробег L</td><td>Суммарное расстояние туда и обратно</td></tr>
+    <tr><td>Конечный спидометр</td><td>Начальный спидометр + пробег (если введён начальный)</td></tr>
+    <tr><td>Вид топлива</td><td>Из выбора в шапке</td></tr>
+    <tr><td>Цена топлива</td><td>Из поля цены в шапке</td></tr>
+    <tr><td>Сезонная надбавка К1</td><td>По текущему сезону (лето/зима)</td></tr>
+    <tr><td>Городская надбавка К3 <span class="field-auto">авто</span></td><td>Рассчитывается автоматически как средневзвешенная по типам городов в маршруте</td></tr>
+    <tr><td>Норма Hн, расход Qн</td><td>Рассчитывается автоматически по формуле АМ-23-р</td></tr>
+    <tr><td>Дата выдачи</td><td>Текущая дата (если не заполнена)</td></tr>
+    <tr><td>Базовая норма Hs</td><td>Из справочника ТС (если ТС выбрано)</td></tr>
+  </table>
+</div>
+
+<!-- S7 -->
+<div class="section" id="s7">
+  <h2><span class="section-num">7</span>Справочник организаций</h2>
+  <p>Позволяет хранить реквизиты организаций и заполнять путевой лист в один клик.</p>
+
+  <h3>Выбор организации</h3>
+  <ol class="steps">
+    <li><div class="txt">В путевом листе найдите зелёный блок «Организация» с выпадающим списком.</div></li>
+    <li><div class="txt">Выберите нужную организацию — название, ОКПО, ИНН, КПП, ОГРН и адрес заполнятся автоматически.</div></li>
+  </ol>
+
+  <h3>Управление справочником</h3>
+  <ol class="steps">
+    <li><div class="txt">Нажмите <span class="btn-demo btn-blue">📋 Справочник</span> рядом с заголовком секции «Организация».</div></li>
+    <li><div class="txt">В открывшемся окне заполните форму и нажмите <span class="btn-demo btn-green">✓ Добавить</span>. Доступные поля: наименование, ИНН, КПП, ОГРН/ЕГРИП, ОКПО, юр. адрес, телефон.</div></li>
+    <li><div class="txt">Для удаления — нажмите <strong>×</strong> напротив организации в таблице.</div></li>
+    <li><div class="txt">Нажмите <span class="btn-demo btn-blue">💾 Сохранить и закрыть</span>.</div></li>
+  </ol>
+
+  <div class="tip tip-green"><div class="tip-icon"></div><div>Данные справочника <strong>сохраняются в браузере</strong> и доступны при следующем открытии файла. Уже загружены: ООО «Наш Выбор», Гермес ООО, КУБАНЬТОРГ ООО, ЮГТОРГ ООО, ПЯТНИЦА ООО, Челухин Е.В. ИП.</div></div>
+</div>
+
+<!-- S8 -->
+<div class="section" id="s8">
+  <h2><span class="section-num">8</span>Справочник транспортных средств</h2>
+  <p>Позволяет хранить данные автомобилей. При выборе ТС автоматически заполняются марка, гос. номер, норма расхода Hs, вид топлива и другие поля.</p>
+
+  <h3>Выбор ТС</h3>
+  <ol class="steps">
+    <li><div class="txt">В путевом листе найдите оранжевый блок «Выбрать ТС».</div></li>
+    <li><div class="txt">Выберите автомобиль из списка — поля заполнятся автоматически.</div></li>
+  </ol>
+
+  <h3>Что заполняется автоматически при выборе ТС</h3>
+  <table class="info">
+    <tr><td>Марка / модель</td><td>Из справочника</td></tr>
+    <tr><td>Гос. номер</td><td>Из справочника</td></tr>
+    <tr><td>Год выпуска, VIN, Тип ТС</td><td>Из справочника</td></tr>
+    <tr><td>Базовая норма Hs</td><td>Норма расхода по Минтрансу для данного ТС</td></tr>
+    <tr><td>Вид топлива</td><td>Из справочника (ДТ, АИ-95 и т.д.)</td></tr>
+    <tr><td>Топливо в баке нач.</td><td>Ёмкость бака из справочника</td></tr>
+  </table>
+
+  <h3>Добавление нового ТС</h3>
+  <ol class="steps">
+    <li><div class="txt">Нажмите <span class="btn-demo btn-orange">🚗 Справочник ТС</span>.</div></li>
+    <li><div class="txt">Заполните форму: гос. номер *, марка/модель *, год, тип, топливо, норма Hs, гараж. номер, VIN, ёмкость бака.</div></li>
+    <li><div class="txt">Нажмите <span class="btn-demo btn-orange">✓ Добавить ТС</span> → <span class="btn-demo btn-orange">💾 Сохранить и закрыть</span>.</div></li>
+  </ol>
+
+  <div class="tip tip-green"><div class="tip-icon"></div><div>Уже загружены 10 автомобилей: Газель NEXT (×3), Daewoo Novus, Hyundai HD-78, Hyundai Mighty, ISUZU, Sollers Atlant, JAC (×2).</div></div>
+</div>
+
+<!-- S9 -->
+<div class="section" id="s9">
+  <h2><span class="section-num">9</span>Заполнение путевого листа вручную</h2>
+  <p><span class="field-badge">Зелёные поля</span> — обязательно заполнить вручную. При заполнении зелёный цвет исчезает.</p>
+
+  <table class="info">
+    <tr><th>Секция</th><th>Что заполнить</th><th>Подсказка</th></tr>
+    <tr><td>Организация</td><td>Выбрать из справочника или ввести вручную</td><td>ИНН, КПП, ОГРН заполнятся авто</td></tr>
+    <tr><td>№ путевого листа</td><td>Порядковый номер, например: 1/001</td><td>Ведётся самостоятельно</td></tr>
+    <tr><td>Период</td><td>Дата начала и конца поездки</td><td>Дата выдачи — текущая</td></tr>
+    <tr><td>Транспортное средство</td><td>Выбрать из справочника ТС</td><td>Марка, гос. номер, норма Hs — авто</td></tr>
+    <tr><td>Спидометр нач.</td><td>Показание спидометра перед выездом</td><td>Конечный спидометр — авто</td></tr>
+    <tr><td>Топливо в баке</td><td>Фактический остаток в баке при выезде</td><td>Расчётный остаток считается авто</td></tr>
+    <tr><td>Водитель</td><td>ФИО, номер удостоверения, категория</td><td></td></tr>
+    <tr><td>Маршрут</td><td>Переносится из планировщика автоматически</td><td>Нажать «Перенести в путевой лист»</td></tr>
+    <tr><td>Базовая норма Hs</td><td>Из таблицы АМ-23-р для вашего ТС</td><td>Авто при выборе из справочника ТС</td></tr>
+    <tr><td>Надбавки</td><td>Сезонная и городская — авто, прочие — вручную</td><td>Горная местность, бездорожье и т.д.</td></tr>
+    <tr><td>Механик</td><td>ФИО, статус ТС (исправен/неисправен)</td><td></td></tr>
+    <tr><td>Диспетчер</td><td>ФИО, время выезда и возврата</td><td></td></tr>
+  </table>
+</div>
+
+<!-- S10 -->
+<div class="section" id="s10">
+  <h2><span class="section-num">10</span>Печать путевого листа</h2>
+  <ol class="steps">
+    <li><div class="txt">Убедитесь, что все нужные поля заполнены (зелёных полей не осталось).</div></li>
+    <li><div class="txt">Нажмите <span class="btn-demo btn-blue">🖨 Распечатать путевой лист</span> внизу панели путевого листа.</div></li>
+    <li><div class="txt">Откроется новое окно с готовым бланком и диалог печати браузера.</div></li>
+    <li><div class="txt">В настройках печати выберите формат <strong>A4</strong>, ориентация <strong>книжная</strong>, поля — <strong>минимальные</strong>.</div></li>
+  </ol>
+
+  <div class="tip"><div class="tip-icon">💡</div><div>Бланк соответствует унифицированной форме ОКУД 0345001 (форма №3). Расчёт топлива выполнен по Распоряжению Минтранса РФ №АМ-23-р от 14.03.2008.</div></div>
+
+  <div class="tip warn"><div class="tip-icon"></div><div>Для сброса путевого листа и заполнения нового нажмите <span class="btn-demo btn-gray">🔄 Сбросить</span> в шапке путевого листа.</div></div>
+</div>
+
+<!-- S11 -->
+<div class="section" id="s11">
+  <h2><span class="section-num">11</span>Расчёт расхода топлива — как работает</h2>
+  <p>Расчёт выполняется по методике Минтранса РФ (Распоряжение №АМ-23-р):</p>
+
+  <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:13px">
+    <div style="font-weight:700;color:#0369a1;margin-bottom:8px">Формула нормативного расхода:</div>
+    <div style="font-size:16px;font-weight:700;color:#1e3a5f;margin-bottom:8px">Qн = 0,01 × Hн × L</div>
+    <div style="color:#475569">Где: <strong>Hн</strong> = Hs × (1 + D/100) — итоговая норма, <strong>L</strong> — пробег в км, <strong>D</strong> — суммарная поправка в %</div>
+  </div>
+
+  <table class="info">
+    <tr><th>Коэффициент</th><th>Значение</th><th>Как определяется</th></tr>
+    <tr><td>Hs — базовая норма</td><td>Индивидуально</td><td>Из таблиц АМ-23-р для конкретной марки ТС; берётся из справочника ТС</td></tr>
+    <tr><td>К1 — сезонная</td><td>0% лето / +10% зима</td><td>Автоматически по кнопке «Лето/Зима» в шапке</td></tr>
+    <tr><td>К3 — городская</td><td>+5% / +10% / +15% / +25%</td><td>Автоматически по типам городов в маршруте</td></tr>
+    <tr><td>Прочие надбавки</td><td>Вводится вручную, %</td><td>Горная местность, грунтовые дороги, частые остановки</td></tr>
+  </table>
+
+  <h3>Типы городов и надбавки</h3>
+  <table class="info">
+    <tr><th>Тип</th><th>Надбавка</th><th>Примеры</th></tr>
+    <tr><td>Мегаполис >1 млн жит.</td><td>+25%</td><td>Краснодар</td></tr>
+    <tr><td>Средний город</td><td>+15%</td><td>Сочи, Геленджик, Новороссийск</td></tr>
+    <tr><td>Малый город / село</td><td>+5%</td><td>Белореченск, Тимашевск, Динская…</td></tr>
+  </table>
+</div>
+
+<!-- S12 -->
+<div class="section" id="s12">
+  <h2><span class="section-num">12</span>Часто задаваемые вопросы</h2>
+
+  <h3>❓ Маршрут не строится</h3>
+  <p>Проверьте подключение к интернету — построение маршрута требует доступа к серверу OSRM. Убедитесь, что добавлена хотя бы одна точка.</p>
+
+  <h3>❓ Справочник ТС пустой</h3>
+  <p>Нажмите <span class="btn-demo btn-orange">🔄 Сбросить к умолчанию</span> в нижней части окна справочника ТС — загрузятся 10 стандартных автомобилей.</p>
+
+  <h3>❓ Зелёные поля не исчезают после заполнения</h3>
+  <p>Зелёный цвет исчезает только если поле содержит введённый текст (не пустой placeholder). Убедитесь, что вы действительно ввели значение, а не только кликнули на поле.</p>
+
+  <h3>❓ Накопленный километраж в путевом листе выглядит неверно</h3>
+  <p>Пересчитайте маршрут заново: нажмите <span class="btn-demo btn-green">🗺 Построить</span>, затем снова <strong>«Перенести в путевой лист»</strong>.</p>
+
+  <h3>❓ Как добавить новый магазин в список точек?</h3>
+  <p>Текущая версия содержит фиксированный список магазинов. Для добавления новых точек необходимо отредактировать файл — обратитесь к разработчику.</p>
+
+  <h3>❓ Как распечатать только путевой лист без карты?</h3>
+  <p>Переключитесь в режим <span class="btn-demo btn-blue">📄 Путевой лист</span> (кнопка вверху), затем нажмите <span class="btn-demo btn-blue">🖨 Распечатать</span>.</p>
+
+  <h3>❓ Данные сохраняются между сеансами?</h3>
+  <p>Справочники организаций и ТС сохраняются в браузере автоматически. Маршрут и путевой лист — нет, их нужно заполнять заново каждый раз.</p>
+
+  <h3>❓ Файл работает без интернета?</h3>
+  <p>Частично. Интерфейс, путевой лист и справочники работают офлайн. Для отображения карты и построения маршрута нужен интернет.</p>
+
+  <div style="margin-top:24px;padding:16px 20px;background:#f1f5f9;border-radius:8px;font-size:12px;color:#64748b;text-align:center">
+    Планировщик маршрутов + Путевой лист · Расчёт по Распоряжению Минтранса РФ №АМ-23-р от 14.03.2008 (с изменениями)
+  </div>
+</div>
+
+</div>
+    </div>
+  </div>
+</div>
+
+<!-- START MODAL -->
+<div id="startModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;width:560px;max-width:95vw;box-shadow:0 8px 40px #0003;overflow:hidden">
+    <div style="background:linear-gradient(90deg,#14532d,#16a34a);padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+      <span style="color:#fff;font-size:14px;font-weight:700">📍 Точка выезда (начало маршрута)</span>
+      <button onclick="closeStartModal()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="padding:16px 18px;background:#f9fafb">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Текущая точка выезда выделена зелёным маркером <b>S</b> на карте. Выберите из списка или введите вручную.</p>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:#374151;font-weight:700;margin-bottom:5px">Быстрый выбор:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="startPresets">
+          <button onclick="setStartPreset('Краснодар, ул. Володарского, 8/1',45.028432,39.004445,'big','Краснодар')" class="sp-btn">Краснодар, ул. Володарского, 8/1</button>
+          <button onclick="setStartPreset('Краснодар, ул. Красная, 1',45.027161,38.975792,'big','Краснодар')" class="sp-btn">Краснодар, ул. Красная, 1</button>
+          <button onclick="setStartPreset('Краснодар, ул. Ставропольская, 75',45.040321,39.020451,'big','Краснодар')" class="sp-btn">Краснодар, ул. Ставропольская, 75</button>
+          <button onclick="setStartPreset('Сочи, Курортный проспект, д. 98/27',43.557910,39.773861,'med','Сочи')" class="sp-btn">Сочи, Курортный проспект, 98/27</button>
+          <button onclick="setStartPreset('Новороссийск, пр. Ленина, 47',44.723781,37.770821,'med','Новороссийск')" class="sp-btn">Новороссийск, пр. Ленина, 47</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:#374151;font-weight:700;margin-bottom:5px">Или введите адрес вручную:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Адрес</div>
+            <input id="startAddr" placeholder="г. Краснодар, ул. ..." style="width:100%;padding:6px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:12px">
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Тип населённого пункта</div>
+            <select id="startCityType" style="width:100%;padding:6px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:12px">
+              <option value="big">Крупный город (&gt;1 млн)</option>
+              <option value="med" selected>Средний город</option>
+              <option value="small">Малый город / село</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Широта</div>
+            <input id="startLat" type="number" step="0.000001" placeholder="45.028432" style="width:100%;padding:6px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:12px">
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Долгота</div>
+            <input id="startLng" type="number" step="0.000001" placeholder="39.004445" style="width:100%;padding:6px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:12px">
+          </div>
+        </div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:8px">💡 Координаты можно скопировать из Яндекс.Карт или Google Maps</div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px">
+        <b>Текущая точка выезда:</b> <span id="startCurrentLabel" style="color:#15803d"></span>
+      </div>
+    </div>
+    <div style="padding:10px 16px;background:#f1f5f9;border-top:1px solid #e5e7eb;display:flex;gap:8px">
+      <button onclick="applyStartManual()" style="padding:7px 18px;background:#16a34a;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">✓ Применить</button>
+      <button onclick="closeStartModal()" style="padding:7px 14px;background:#64748b;color:#fff;border:none;border-radius:5px;font-size:12px;cursor:pointer">Отмена</button>
+      <button onclick="resetStart()" style="padding:7px 14px;background:#dc2626;color:#fff;border:none;border-radius:5px;font-size:12px;cursor:pointer;margin-left:auto">🔄 Сброс к умолчанию</button>
+    </div>
+  </div>
+</div>
+<style>
+.sp-btn{padding:5px 10px;background:#f0fdf4;border:1px solid #86efac;border-radius:5px;font-size:11px;cursor:pointer;color:#15803d;font-weight:600;transition:.15s}
+.sp-btn:hover{background:#16a34a;color:#fff;border-color:#16a34a}
+</style>
+
+<!-- ORG MODAL -->
+<div id="orgModal">
+  <div id="orgBox">
+    <div id="orgMH">
+      <h3>📋 Справочник организаций</h3>
+      <button id="orgMCl" onclick="closeOrgModal()">×</button>
+    </div>
+    <div id="orgMB">
+      <div id="orgAddF">
+        <div class="ah">➕ Добавить новую организацию</div>
+        <div class="ag">
+          <div><label>Наименование *</label><input id="nName" placeholder='ООО "Название"'></div>
+          <div><label>ИНН</label><input id="nInn" placeholder="0000000000" maxlength="13"></div>
+          <div><label>КПП</label><input id="nKpp" placeholder="000000000" maxlength="9"></div>
+          <div><label>ОГРН / ЕГРИП</label><input id="nOgrn" placeholder="0000000000000" maxlength="15"></div>
+          <div><label>ОКПО</label><input id="nOkpo" placeholder="12345678" maxlength="10"></div>
+          <div><label>Телефон</label><input id="nPhone" placeholder="+7 (861) 000-00-00"></div>
+          <div style="grid-column:1/-1"><label>Юридический адрес</label><input id="nAddr" placeholder="350038, Краснодарский край, г. Краснодар, ул. ..."></div>
+        </div>
+        <button onclick="addOrg()" style="padding:6px 16px;background:#16a34a;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">✓ Добавить</button>
+      </div>
+      <table id="orgTbl">
+        <thead><tr><th style="width:28px">#</th><th>Наименование</th><th style="width:100px">ИНН</th><th style="width:105px">ОГРН/ЕГРИП</th><th style="width:36px"></th></tr></thead>
+        <tbody id="orgTbody"></tbody>
+      </table>
+    </div>
+    <div id="orgMF">
+      <button onclick="saveAndClose()" style="padding:7px 18px;background:#2563eb;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">💾 Сохранить и закрыть</button>
+      <button onclick="closeOrgModal()" style="padding:7px 14px;background:#64748b;color:#fff;border:none;border-radius:5px;font-size:12px;cursor:pointer">Отмена</button>
+      <span style="flex:1"></span>
+      <span style="font-size:10px;color:#9ca3af">Данные сохраняются в браузере</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- VEH MODAL -->
+<div id="vehModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;width:700px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px #0003;overflow:hidden">
+    <div style="background:linear-gradient(90deg,#78350f,#d97706);padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+      <span style="color:#fff;font-size:14px;font-weight:700">🚗 Справочник транспортных средств</span>
+      <button onclick="closeVehModal()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 16px;background:#f9fafb">
+      <!-- Add form -->
+      <div style="background:#fff7ed;border:1px solid #fcd34d;border-radius:7px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:9px">➕ Добавить транспортное средство</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Гос. номер *</div><input id="vn_plate" placeholder="О893АК 193" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Марка / модель *</div><input id="vn_car" placeholder="Газель NEXT" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Год выпуска</div><input id="vn_year" type="number" placeholder="2018" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Тип ТС</div><input id="vn_type" placeholder="Грузовой" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Вид топлива</div>
+            <select id="vn_fuel" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px">
+              <option value="">— выбрать —</option>
+              <option value="АИ-92">АИ-92 (бензин)</option>
+              <option value="АИ-95">АИ-95 (бензин)</option>
+              <option value="АИ-98">АИ-98 (бензин)</option>
+              <option value="ДТ">Дизельное топливо (ДТ)</option>
+              <option value="ДТ Зимнее">ДТ зимнее</option>
+              <option value="СУГ">СУГ (пропан-бутан)</option>
+              <option value="КПГ">КПГ (метан)</option>
+            </select>
+          </div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Норма расхода Hs, л/100км</div><input id="vn_hs" type="number" step="0.1" placeholder="14.9" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Гаражный номер</div><input id="vn_garage" placeholder="001" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">VIN</div><input id="vn_vin" placeholder="XXXXXXXXXXXXXXXXX" maxlength="17" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+          <div><div style="font-size:10px;color:#6b7280;font-weight:600;margin-bottom:2px">Ёмкость бака, л</div><input id="vn_tank" type="number" placeholder="120" style="width:100%;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:12px"></div>
+        </div>
+        <button onclick="addVeh()" style="padding:6px 16px;background:#d97706;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">✓ Добавить ТС</button>
+      </div>
+      <!-- Table -->
+      <table id="vehTbl" style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#78350f">
+          <th style="color:#fff;padding:6px 8px;text-align:left;width:28px">#</th>
+          <th style="color:#fff;padding:6px 8px;text-align:left;width:110px">Гос. номер</th>
+          <th style="color:#fff;padding:6px 8px;text-align:left">Марка / модель</th>
+          <th style="color:#fff;padding:6px 8px;text-align:left;width:70px">Тип</th>
+          <th style="color:#fff;padding:6px 8px;text-align:left;width:65px">Топливо</th>
+          <th style="color:#fff;padding:6px 8px;text-align:right;width:70px">Норма Hs</th>
+          <th style="color:#fff;padding:6px 8px;width:30px"></th>
+        </tr></thead>
+        <tbody id="vehTbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:10px 16px;background:#f1f5f9;border-top:1px solid #e5e7eb;display:flex;gap:8px;align-items:center">
+      <button onclick="saveVehAndClose()" style="padding:7px 18px;background:#d97706;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">💾 Сохранить и закрыть</button>
+      <button onclick="resetVehs()" style="padding:7px 14px;background:#dc2626;color:#fff;border:none;border-radius:5px;font-size:12px;cursor:pointer" title="Сбросить к заводским данным">🔄 Сбросить к умолчанию</button>
+      <button onclick="closeVehModal()" style="padding:7px 14px;background:#64748b;color:#fff;border:none;border-radius:5px;font-size:12px;cursor:pointer">Отмена</button>
+      <span style="flex:1"></span>
+      <span style="font-size:10px;color:#9ca3af">Данные сохраняются в браузере</span>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ════════════════════════════
+// DATA
+// ════════════════════════════
+let START={id:'S',address:'Краснодар, ул. Володарского, 8/1',lat:45.028432,lng:39.004445,cityType:'big',cityName:'Краснодар'};
+let startMarker=null;
+
+const DEST=[
+  {id:0,address:'Белореченск, ул. Первомайская, 4/1',lat:44.765569,lng:39.873143,cityType:'small',cityName:'Белореченск'},
+  {id:1,address:'Варениковская, ул. Красная, 128',lat:45.112184,lng:37.643740,cityType:'small',cityName:'Варениковская'},
+  {id:2,address:'Геленджик, пр. Геленджикский, 2B',lat:44.554776,lng:38.111843,cityType:'med',cityName:'Геленджик'},
+  {id:3,address:'Горячий Ключ, ул. Псекупская, 99/Мира 36',lat:44.630468,lng:39.111848,cityType:'small',cityName:'Горячий Ключ'},
+  {id:4,address:'Гулькевичи, ул. Короткова, 154',lat:45.361026,lng:40.676812,cityType:'small',cityName:'Гулькевичи'},
+  {id:5,address:'Динская, ул. Новая, 162',lat:45.221999,lng:39.209926,cityType:'small',cityName:'Динская'},
+  {id:6,address:'Елизаветинская, ул. Степная, 292',lat:45.051507,lng:38.801534,cityType:'small',cityName:'Елизаветинская'},
+  {id:7,address:'Ильский, ул. Мира, 146',lat:44.845918,lng:38.570523,cityType:'small',cityName:'Ильский'},
+  {id:8,address:'Калининская, ул. Ленина, 155',lat:45.484711,lng:38.661496,cityType:'small',cityName:'Калининская'},
+  {id:9,address:'Кореновск, ул. Карла Маркса, 403',lat:45.476799,lng:39.422557,cityType:'small',cityName:'Кореновск'},
+  {id:10,address:'Курганинск, ул. Матросова, 241',lat:44.897251,lng:40.597617,cityType:'small',cityName:'Курганинск'},
+  {id:11,address:'Лабинск, ул. Халтурина, 35а',lat:44.634515,lng:40.731061,cityType:'small',cityName:'Лабинск'},
+  {id:12,address:'Марьянская, ул. Тургенева, 2/2',lat:45.107419,lng:38.660418,cityType:'small',cityName:'Марьянская'},
+  {id:13,address:'Медведовская, ул. Мира, 136',lat:45.445292,lng:39.005478,cityType:'small',cityName:'Медведовская'},
+  {id:14,address:'Новотитаровская, ул. Ленина, 166',lat:45.238852,lng:38.979176,cityType:'small',cityName:'Новотитаровская'},
+  {id:15,address:'Полтавская, ул. Коммунистическая, 200',lat:45.365237,lng:38.207325,cityType:'small',cityName:'Полтавская'},
+  {id:16,address:'Приморско-Ахтарск, ул. Космонавтов, 27',lat:46.044197,lng:38.165868,cityType:'small',cityName:'Приморско-Ахтарск'},
+  {id:17,address:'Славянск-на-Кубани, ул. Батарейная, 253',lat:45.251874,lng:38.118266,cityType:'small',cityName:'Славянск-на-Кубани'},
+  {id:18,address:'Славянск-на-Кубани, ул. Пролетарская, 246А',lat:45.277909,lng:38.095611,cityType:'small',cityName:'Славянск-на-Кубани'},
+  {id:19,address:'Смоленская, ул. Мира, 56А',lat:44.789883,lng:38.802459,cityType:'small',cityName:'Смоленская'},
+  {id:20,address:'Тбилисская, ул. Октябрьская, 323',lat:45.364997,lng:40.214602,cityType:'small',cityName:'Тбилисская'},
+  {id:21,address:'Темиргоевская, ул. Ленина, 78В',lat:45.113068,lng:40.268007,cityType:'small',cityName:'Темиргоевская'},
+  {id:22,address:'Темрюк, ул. 27 сентября, 8/1к3',lat:45.262171,lng:37.441817,cityType:'small',cityName:'Темрюк'},
+  {id:23,address:'Тимашевск, ул. Пролетарская, 111',lat:45.616280,lng:38.933371,cityType:'small',cityName:'Тимашевск'},
+  {id:24,address:'Сочи, Адлерский р., ул. Гастелло, д. 40А',lat:43.450608,lng:39.918212,cityType:'med',cityName:'Сочи'},
+  {id:25,address:'Сочи, Адлерский р., ул. Известинская, д. 6',lat:43.466889,lng:39.902877,cityType:'med',cityName:'Сочи'},
+  {id:26,address:'Сочи, Адлерский р., ул. Изумрудная, д. 28',lat:43.458900,lng:39.906444,cityType:'med',cityName:'Сочи'},
+  {id:27,address:'Сочи, Адлерский р., ул. Каспийская, д. 24а',lat:43.419801,lng:39.962005,cityType:'med',cityName:'Сочи'},
+  {id:28,address:'Сочи, Адлерский р., ул. Костромская, д. 62',lat:43.453468,lng:39.954513,cityType:'med',cityName:'Сочи'},
+  {id:29,address:'Сочи, Батумское шоссе, 135/1Г',lat:43.647501,lng:39.693067,cityType:'med',cityName:'Сочи'},
+  {id:30,address:'Сочи, ул. Бытха, д. 41/1',lat:43.565337,lng:39.759048,cityType:'med',cityName:'Сочи'},
+  {id:31,address:'Сочи, ул. Виноградная, д. 195/13',lat:43.631843,lng:39.707090,cityType:'med',cityName:'Сочи'},
+  {id:32,address:'Сочи, ул. Гагарина, д. 44',lat:43.603394,lng:39.724445,cityType:'med',cityName:'Сочи'},
+  {id:33,address:'Сочи, с. Горное Лоо, пер. Лооский, д. 1Г/3',lat:43.717512,lng:39.602427,cityType:'med',cityName:'Сочи'},
+  {id:34,address:'Сочи, с. Детляжка, ул. Рязанская, д. 11',lat:43.755621,lng:39.533149,cityType:'med',cityName:'Сочи'},
+  {id:35,address:'Сочи, Курортный проспект, д. 98/27',lat:43.557910,lng:39.773861,cityType:'med',cityName:'Сочи'},
+  {id:36,address:'Сочи, ул. Пасечная, д. 20',lat:43.619399,lng:39.729718,cityType:'med',cityName:'Сочи'},
+  {id:37,address:'Сочи, ул. Пасечная, д. 61к2',lat:43.624913,lng:39.729233,cityType:'med',cityName:'Сочи'},
+  {id:38,address:'Сочи, ул. Первомайская, д. 21',lat:43.584193,lng:39.726709,cityType:'med',cityName:'Сочи'},
+  {id:39,address:'Сочи, п. Сириус, ул. Тюльпанов, д. 6',lat:43.421602,lng:39.932414,cityType:'med',cityName:'Сочи'},
+  {id:40,address:'Сочи, ул. Тимирязева, д. 46/2',lat:43.633018,lng:39.728937,cityType:'med',cityName:'Сочи'},
+  {id:41,address:'Сочи, Хостинский р., ул. Искры, д. 50',lat:43.494369,lng:39.898826,cityType:'med',cityName:'Сочи'},
+  {id:42,address:'Краснодар, ул. Красная, 1',lat:45.027161,lng:38.975792,cityType:'big',cityName:'Краснодар'},
+  {id:43,address:'Краснодар, ул. Ставропольская, 75',lat:45.040321,lng:39.020451,cityType:'big',cityName:'Краснодар'},
+  {id:44,address:'Анапа, ул. Астраханская, 95',lat:44.895870,lng:37.316520,cityType:'small',cityName:'Анапа'},
+  {id:45,address:'Новороссийск, пр. Ленина, 47',lat:44.723781,lng:37.770821,cityType:'med',cityName:'Новороссийск'},
+  {id:46,address:'Туапсе, ул. Фрунзе, 12',lat:44.100361,lng:39.079681,cityType:'small',cityName:'Туапсе'},
+];
+
+const CC={big:'#3b82f6',med:'#f97316',small:'#e94560'};
+const SC=['#e94560','#2563eb','#16a34a','#f59e0b','#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899','#14b8a6'];
+
+// ════════════════════════════
+// MAP
+// ════════════════════════════
+const map=L.map('map').setView([44.8,38.9],8);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+
+const lrRoutes=L.layerGroup().addTo(map);
+const lrLabels=L.layerGroup().addTo(map);
+const lrWP=L.layerGroup().addTo(map);
+
+function mkSIcon(){return L.divIcon({html:`<div style="width:22px;height:22px;border-radius:50%;background:#22c55e;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;box-shadow:0 2px 6px #0004">S</div>`,iconSize:[22,22],iconAnchor:[11,11],popupAnchor:[0,-12]});}
+function mkDIcon(color){return L.divIcon({html:`<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px #0004"></div>`,iconSize:[14,14],iconAnchor:[7,7],popupAnchor:[0,-8]});}
+function mkNIcon(n,color){return L.divIcon({html:`<div style="width:24px;height:24px;border-radius:50%;background:${color};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;box-shadow:0 2px 8px #0005">${n}</div>`,iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-13]});}
+
+startMarker=L.marker([START.lat,START.lng],{icon:mkSIcon(),zIndexOffset:1000,draggable:true}).addTo(map);
+startMarker.bindPopup('<div class="ptit">📍 Точка выезда</div>'+esc(START.address));
+startMarker.on('dragend',function(e){
+  const ll=e.target.getLatLng();
+  START.lat=ll.lat;START.lng=ll.lng;
+  START.address='Координаты: '+ll.lat.toFixed(6)+', '+ll.lng.toFixed(6);
+  startMarker.setPopupContent('<div class="ptit">📍 Точка выезда</div>'+esc(START.address));
+  START.cityName='Старт';
+  updateStartLabel();
+  if(lastResult)buildRoute(); else if(wps.length)invalidateRoute();
+});
+
+const DM={};
+DEST.forEach(d=>{
+  const m=L.marker([d.lat,d.lng],{icon:mkDIcon(CC[d.cityType]),zIndexOffset:100}).addTo(map);
+  m.bindPopup('<div class="ptit">'+esc(d.cityName)+'</div><div style="font-size:11px;color:#475569">'+esc(d.address)+'</div>');
+  m.on('click',()=>clickDest(d));
+  DM[d.id]=m;
+});
+
+// map legend
+const leg=L.control({position:'bottomleft'});
+leg.onAdd=function(){
+  const d=L.DomUtil.create('div');
+  d.style.cssText='background:#fff;padding:7px 11px;border-radius:7px;font-size:10px;color:#374151;border:1px solid #e2e8f0;box-shadow:0 2px 8px #0001;line-height:1.9';
+  d.innerHTML='<b style="color:#1e40af">Тип населённого пункта</b><br>'
+    +'<span style="color:#3b82f6">●</span> Краснодар (+25%)<br>'
+    +'<span style="color:#f97316">●</span> Средний город +10–15%<br>'
+    +'<span style="color:#e94560">●</span> Малый город +5%<br>'
+    +'<span style="color:#22c55e">●</span> Старт<br>'
+    +'<div style="margin-top:5px;font-size:9px;color:#64748b">Надбавка рассчитывается<br>по границам городов АМ-23-р</div>';
+  return d;
+};
+leg.addTo(map);
+
+// ════════════════════════════
+// STATE
+// ════════════════════════════
+let wps=[];
+let lastResult=null;
+let plannerOn=true;
+let isSummer=true;
+let dragIdx=null;
+
+// ════════════════════════════
+// FUEL NORMS
+// ════════════════════════════
+const BASE_HS=9.0,K_W=0.10,K_AC=0.07,K_A=0.05,K_ST=0.05;
+// ════════════════════════════════════════════════
+// CITY BOUNDARY DATABASE (Краснодарский край)
+// Радиусы городских зон для расчёта надбавок АМ-23-р
+// city_km = радиус плотной городской застройки
+// surround_km = радиус пригородной зоны (пониженная надбавка)
+// k = надбавка % внутри города
+// ════════════════════════════════════════════════
+const CITY_DB=[
+  // Мегаполис Краснодар >1 млн жит → +25%
+  {name:'Краснодар', lat:45.0355,lng:38.9753, city_km:12, surround_km:20, k:25, type:'big'},
+  // Крупные города 250–1000 тыс → +15%
+  {name:'Сочи',        lat:43.5992,lng:39.7257, city_km:8,  surround_km:15, k:15, type:'med'},
+  {name:'Новороссийск',lat:44.7239,lng:37.7686, city_km:6,  surround_km:12, k:15, type:'med'},
+  {name:'Армавир',     lat:44.9882,lng:41.1247, city_km:5,  surround_km:10, k:15, type:'med'},
+  {name:'Майкоп',      lat:44.6099,lng:40.1069, city_km:5,  surround_km:10, k:15, type:'med'},
+  // Средние города 100–250 тыс → +10%
+  {name:'Геленджик',   lat:44.5597,lng:38.0775, city_km:4,  surround_km:8,  k:10, type:'med'},
+  {name:'Ейск',        lat:46.7094,lng:38.2739, city_km:4,  surround_km:8,  k:10, type:'med'},
+  {name:'Тихорецк',    lat:45.8528,lng:40.1292, city_km:3,  surround_km:6,  k:10, type:'med'},
+  // Малые города 100 тыс → +5%
+  {name:'Белореченск', lat:44.7655,lng:39.8731, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Горячий Ключ',lat:44.6305,lng:39.1118, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Гулькевичи',  lat:45.3610,lng:40.6768, city_km:2,  surround_km:4, k:5, type:'small'},
+  {name:'Динская',     lat:45.2220,lng:39.2099, city_km:2,  surround_km:4, k:5, type:'small'},
+  {name:'Кореновск',   lat:45.4768,lng:39.4226, city_km:2,  surround_km:4, k:5, type:'small'},
+  {name:'Курганинск',  lat:44.8973,lng:40.5976, city_km:2,  surround_km:4, k:5, type:'small'},
+  {name:'Лабинск',     lat:44.6345,lng:40.7311, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Тимашевск',   lat:45.6163,lng:38.9334, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Кропоткин',   lat:45.4370,lng:40.5780, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Тбилисская',  lat:45.3650,lng:40.2146, city_km:2,  surround_km:4, k:5, type:'small'},
+  {name:'Темрюк',      lat:45.2622,lng:37.4418, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Приморско-Ахтарск',lat:46.0442,lng:38.1659,city_km:2,surround_km:4,k:5,type:'small'},
+  {name:'Славянск-на-Кубани',lat:45.2525,lng:38.1253,city_km:2.5,surround_km:5,k:5,type:'small'},
+  {name:'Анапа',       lat:44.8959,lng:37.3165, city_km:3,  surround_km:6, k:5, type:'small'},
+  {name:'Туапсе',      lat:44.1004,lng:39.0797, city_km:2.5,surround_km:5, k:5, type:'small'},
+  {name:'Медведовская',lat:45.4453,lng:39.0055, city_km:1.5,surround_km:3, k:5, type:'small'},
+  {name:'Марьянская',  lat:45.1074,lng:38.6604, city_km:1.5,surround_km:3, k:5, type:'small'},
+  {name:'Елизаветинская',lat:45.0515,lng:38.8015,city_km:1.5,surround_km:3,k:5,type:'small'},
+  {name:'Варениковская',lat:45.1122,lng:37.6437,city_km:1.5,surround_km:3,k:5,type:'small'},
+  {name:'Полтавская',  lat:45.3652,lng:38.2073, city_km:1.5,surround_km:3, k:5, type:'small'},
+  {name:'Калининская', lat:45.4847,lng:38.6615, city_km:1.5,surround_km:3, k:5, type:'small'},
+  {name:'Ильский',     lat:44.8459,lng:38.5705, city_km:1.5,surround_km:3, k:5, type:'small'},
+  {name:'Смоленская',  lat:44.7899,lng:38.8025, city_km:1.5,surround_km:3, k:5, type:'small'},
+  {name:'Темиргоевская',lat:45.1131,lng:40.2680,city_km:1.5,surround_km:3,k:5,type:'small'},
+  {name:'Новотитаровская',lat:45.2389,lng:38.9792,city_km:1.5,surround_km:3,k:5,type:'small'},
+  // Адлер (район Сочи)
+  {name:'Адлер',       lat:43.4506,lng:39.9182, city_km:4,  surround_km:7, k:15, type:'med'},
+];
+
+// HTML-escape for user/directory strings that go through innerHTML / print window
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// today in LOCAL time (toISOString gives UTC and can be off by a day)
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+// Haversine distance in km
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// Get city surcharge % and zone info for a coordinate
+function getCityInfo(lat,lng){
+  let best=null,bestDist=Infinity;
+  CITY_DB.forEach(c=>{
+    const d=haversine(lat,lng,c.lat,c.lng);
+    if(d<bestDist){bestDist=d;best={...c,dist:d};}
+  });
+  if(!best) return {k:5,zone:'загород',city:null};
+  if(bestDist<=best.city_km)    return {k:best.k, zone:'город '+best.name, city:best.name};
+  if(bestDist<=best.surround_km) return {k:Math.round(best.k/2), zone:'пригород '+best.name, city:best.name};
+  return {k:0, zone:'загород', city:null};
+}
+
+// Calculate fuel for a segment using city-boundary model
+// From point A to point B: interpolate along route, sample city zones
+function calcFuelSeg(fromLat,fromLng,toLat,toLng,km,sea,routeCoords){
+  if(!routeCoords||routeCoords.length<2){
+    // Fallback: estimate based on start/end city zones
+    const zA=getCityInfo(fromLat,fromLng);
+    const zB=getCityInfo(toLat,toLng);
+    const kA=(zA.k||0)/100, kB=(zB.k||0)/100;
+    const kH=sea==='w'?K_W:K_AC;
+    const baseK=K_A+K_ST+kH;
+    // Weight: 20% near start city, 20% near end city, 60% highway
+    const cityKm=Math.min(km*0.2,5),hwKm=Math.max(0,km-cityKm*2);
+    const rCity=BASE_HS*(1+baseK+(kA+kB)/2);
+    const rHw=BASE_HS*(1+baseK);
+    return (cityKm*rCity*2+hwKm*rHw)/100;
+  }
+  // Sample route coordinates for precise city zone calculation
+  const step=Math.max(1,Math.floor(routeCoords.length/60));
+  const idx=[];
+  for(let i=0;i<routeCoords.length;i+=step)idx.push(i);
+  if(idx[idx.length-1]!==routeCoords.length-1)idx.push(routeCoords.length-1); // never drop the tail
+  const kH=sea==='w'?K_W:K_AC;
+  const parts=[];let sumKm=0;
+  for(let j=1;j<idx.length;j++){
+    const a=routeCoords[idx[j-1]],b=routeCoords[idx[j]];
+    const segKm=haversine(a[0],a[1],b[0],b[1]);
+    // zone is taken at the middle of the sampled piece
+    const zi=getCityInfo((a[0]+b[0])/2,(a[1]+b[1])/2);
+    parts.push([segKm,zi.k]);sumKm+=segKm;
+  }
+  // scale sampled chord length to the real OSRM distance so km and fuel agree
+  const scale=sumKm>0?km/sumKm:1;
+  let fuel=0;
+  parts.forEach(([sk,zk])=>{fuel+=sk*scale*BASE_HS*(1+K_A+K_ST+kH+zk/100)/100;});
+  return fuel;
+}
+
+// Legacy aliases
+const K_BIG=0.25,K_MED=0.15,K_SM=0.05,K_MTN=0.05,CKMT=5;
+function norm(ct,sea){
+  let k=K_A+K_ST+(sea==='w'?K_W:K_AC);
+  if(ct==='big')k+=K_BIG; else if(ct==='med')k+=K_MED; else k+=K_SM;
+  return BASE_HS*(1+k);
+}
+function hwN(sea){return BASE_HS*(1+K_A+K_ST+(sea==='w'?K_W:K_AC));}
+function calcFuel(km,ft,tt,sea,routeCoords){
+  // Use city-boundary model if coords available
+  if(routeCoords&&routeCoords.length>2) return null; // signal to use calcFuelSeg
+  const d1=Math.min(CKMT,km),r=km-d1,d2=Math.min(CKMT,r),d3=r-d2;
+  return d1*norm(ft,sea)/100+d2*norm(tt,sea)/100+d3*hwN(sea)/100;
+}
+function sea(){return isSummer?'s':'w';}
+
+// ════════════════════════════
+// ROUTE BUILD
+// ════════════════════════════
+async function fetchSeg(a,b){
+  const u=`https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+  const r=await fetch(u);
+  if(!r.ok)throw new Error('Сервис маршрутов недоступен (HTTP '+r.status+')');
+  const d=await r.json();
+  if(!d.routes?.length)throw new Error('Маршрут не найден');
+  return d.routes[0];
+}
+
+let building=false;
+async function buildRoute(){
+  if(!wps.length||building)return;
+  building=true;
+  document.getElementById('loading').style.display='block';
+  lrRoutes.clearLayers();lrLabels.clearLayers();lrWP.clearLayers();
+  const s=sea(),pr=parseFloat(document.getElementById('fuelPrice').value)||69.7;
+  const pts=[START,...wps,START];
+  let tKm=0,tFuel=0;const segs=[];
+  try{
+    for(let i=0;i<pts.length-1;i++){
+      document.getElementById('lprog').textContent=`${i+1}/${pts.length-1}`;
+      const sg=await fetchSeg(pts[i],pts[i+1]);
+      const km=sg.distance/1000;
+      // City-boundary fuel calculation using actual route geometry
+      const coords=sg.geometry.coordinates.map(c=>[c[1],c[0]]);
+      const fuel=calcFuelSeg(pts[i].lat,pts[i].lng,pts[i+1].lat,pts[i+1].lng,km,s,coords);
+      tKm+=km;tFuel+=fuel;
+      const col=SC[i%SC.length];
+      L.polyline(coords,{color:col,weight:5,opacity:.85}).addTo(lrRoutes);
+      L.polyline(coords,{color:'#fff',weight:1.5,opacity:.2,dashArray:'5 9'}).addTo(lrRoutes);
+      const mid=coords[Math.floor(coords.length/2)];
+      L.marker(mid,{icon:L.divIcon({html:`<div style="background:${col};color:#fff;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px #0006">${km.toFixed(1)} км</div>`,iconSize:[0,0],iconAnchor:[0,0]}),interactive:false}).addTo(lrLabels);
+      segs.push({from:pts[i],to:pts[i+1],km,fuel,col,coords});
+    }
+    wps.forEach((w,i)=>{
+      const col=SC[(i+1)%SC.length];
+      L.marker([w.lat,w.lng],{icon:mkNIcon(i+1,col),zIndexOffset:800+i}).addTo(lrWP)
+       .bindPopup((function(){
+        const zi=getCityInfo(w.lat,w.lng);
+        return '<div class="ptit">'+esc(w.cityName)+'</div>'+esc(w.address)
+          +'<br><span style="color:#f59e0b;font-size:11px">'+segs[i].km.toFixed(1)+' км · '+segs[i].fuel.toFixed(2)+' л</span>'
+          +'<br><span style="font-size:10px;color:#94a3b8">🏙 '+zi.zone+' (надбавка +'+zi.k+'%)</span>';
+      })());
+    });
+    lastResult={segs,tKm,tFuel,pr,s};
+    // update summary
+    const fe=document.getElementById('sFuel');
+    document.getElementById('sDist').textContent=tKm.toFixed(1)+' км';
+    fe.textContent=tFuel.toFixed(2)+' л';
+    fe.className='sv '+(isSummer?'sum':'win');
+    document.getElementById('sCost').textContent=(tFuel*pr).toFixed(0)+' ₽';
+    document.getElementById('sPts').textContent=wps.length;
+    document.getElementById('sSL').textContent=isSummer?'лето':'зима';
+    document.getElementById('sumBox').style.display='block';
+    const bs=document.getElementById('btnSend');
+    bs.disabled=false;bs.style.opacity='1';bs.style.pointerEvents='auto';
+    bs.style.boxShadow='0 4px 18px rgba(22,163,74,.55)';
+    bs.style.animation='pulse-green 2s ease-in-out 3';
+    const gpxBtn=document.getElementById('btnGPX');if(gpxBtn){gpxBtn.disabled=false;gpxBtn.style.opacity='1';gpxBtn.style.pointerEvents='auto';}
+    document.getElementById('btnC').disabled=false;
+    const all=wps.map(w=>[w.lat,w.lng]);all.push([START.lat,START.lng]);
+    map.fitBounds(L.latLngBounds(all).pad(0.08));
+  }catch(e){lastResult=null;alert('Ошибка: '+e.message);}
+  building=false;
+  document.getElementById('loading').style.display='none';
+}
+
+// ════════════════════════════
+// SEND TO WAYBILL
+// ════════════════════════════
+function sendToWB(){
+  if(!lastResult||!wps.length){alert('Сначала постройте маршрут!');return;}
+  const segs=lastResult.segs;
+  // Build table rows: segs[0]=START→wp[0], segs[1]=wp[0]→wp[1], ...
+  let cum=0,html='';
+  wps.forEach((wp,i)=>{
+    const sg=segs[i];
+    if(!sg)return;
+    cum+=sg.km;
+    html+=`<tr><td style="padding:4px 8px;border:1px solid #d1d5db;font-size:10pt">${i+1}</td><td style="padding:4px 8px;border:1px solid #d1d5db;font-size:10pt">${esc(wp.address)}</td><td style="padding:4px 8px;border:1px solid #d1d5db;text-align:right;font-size:10pt;font-weight:600">${sg.km.toFixed(1)}</td><td style="padding:4px 8px;border:1px solid #d1d5db;text-align:right;font-size:10pt;font-weight:700;color:#1e3a5f">${cum.toFixed(1)}</td></tr>`;
+  });
+  const ret=segs[segs.length-1];
+  if(ret){cum+=ret.km;html+=`<tr><td style="padding:4px 8px;border:1px solid #d1d5db;font-size:10pt;color:#6b7280">—</td><td style="padding:4px 8px;border:1px solid #d1d5db;font-size:10pt;font-style:italic;color:#6b7280">↩ Возврат: ${esc(START.address)}</td><td style="padding:4px 8px;border:1px solid #d1d5db;text-align:right;font-size:10pt;color:#6b7280">${ret.km.toFixed(1)}</td><td style="padding:4px 8px;border:1px solid #d1d5db;text-align:right;font-size:10pt;font-weight:700;color:#1e3a5f">${cum.toFixed(1)}</td></tr>`;}
+  document.getElementById('wbRbody').innerHTML=html||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Нет данных</td></tr>';
+  document.getElementById('wbBadge').style.display='inline';
+  // fill fields
+  const pr=parseFloat(document.getElementById('fuelPrice').value)||69.7;
+  setWB('wb_price',pr);
+  setWB('wb_km',lastResult.tKm.toFixed(1));
+  if(!v('wb_hs'))setWB('wb_hs',BASE_HS.toFixed(1));
+  if(!v('wb_date'))setWB('wb_date',todayStr());
+  // season
+  const k1=document.getElementById('wb_k1');
+  k1.value=isSummer?'0':'10';onSelChange(k1);
+  // age surcharge
+  autoK5();
+  // AC surcharge
+  autoK4();
+
+  // auto city surcharge — weighted by segment distance
+  const k3El=document.getElementById('wb_k3');
+  const segsForCity=lastResult.segs.slice(0,-1); // exclude return leg
+  const totalSegKm=segsForCity.reduce((s,sg)=>s+sg.km,0)||1;
+  // Use city boundary model for precise surcharge calculation
+  let weightedCity=0;
+  segsForCity.forEach(sg=>{
+    // Sample midpoint between segment start and end
+    const midLat=(sg.from.lat+sg.to.lat)/2, midLng=(sg.from.lng+sg.to.lng)/2;
+    const zFrom=getCityInfo(sg.from.lat,sg.from.lng);
+    const zMid=getCityInfo(midLat,midLng);
+    const zTo=getCityInfo(sg.to.lat,sg.to.lng);
+    // Weighted average of 3 points along segment
+    const pct=(zFrom.k+zMid.k*2+zTo.k)/4;
+    weightedCity+=pct*(sg.km/totalSegKm);
+  });
+  // Round to nearest available option: 0,5,10,15,25
+  const opts=[0,5,10,15,25];
+  const autoK3=opts.reduce((prev,cur)=>Math.abs(cur-weightedCity)<Math.abs(prev-weightedCity)?cur:prev);
+  k3El.value=String(autoK3);
+  onSelChange(k3El);
+  // Show auto badge
+  document.getElementById('k3AutoBadge').style.display='inline';
+  document.getElementById('wb_k3_auto').style.display='block';
+  document.getElementById('wb_k3_auto').textContent='⚙ авто: '+autoK3+'% (средневзвеш. по '+segsForCity.length+' сегм.)';
+  // fuel type from map selector
+  const ft=document.getElementById('wb_fuel_type');
+  if(mapFuelType){ft.value=mapFuelType;onSelChange(ft);}
+  else if(!ft.value){ft.value='АИ-95';onSelChange(ft);}
+  recalcFuel();
+  calcOdo();
+  updSigns();
+  setView('split');
+  setTimeout(()=>document.getElementById('wbScroll').scrollTop=0,120);
+}
+
+function v(id){return document.getElementById(id)?.value||'';}
+function setWB(id,val){const el=document.getElementById(id);if(el)el.value=val;}
+
+// ════════════════════════════
+// WB HELPERS
+// ════════════════════════════
+function onWBInput(el){/* green via CSS :placeholder-shown */}
+
+function calcAgeK5(){
+  const yr=parseInt(v('wb_year'));
+  if(isNaN(yr)||yr<1900) return null;
+  const age=new Date().getFullYear()-yr;
+  if(age>8) return 10;
+  if(age>5) return 5;
+  return 0;
+}
+
+function autoK5(){
+  const k=calcAgeK5();
+  if(k===null) return;
+  const el=document.getElementById('wb_k5');
+  el.value=String(k);
+  const badge=document.getElementById('k5AutoBadge');
+  const hint=document.getElementById('wb_k5_hint');
+  badge.style.display='inline';
+  hint.style.display='block';
+  const yr=parseInt(v('wb_year'));
+  const age=new Date().getFullYear()-yr;
+  hint.textContent='⚙ авто: возраст '+age+' лет → +'+k+'%';
+  recalcFuel();
+}
+
+function onK5Change(el){
+  // user manually changed — hide auto badge
+  document.getElementById('k5AutoBadge').style.display='none';
+  const hint=document.getElementById('wb_k5_hint');
+  hint.style.display='none';
+}
+
+function autoK4(){
+  // летний сезон → предлагаем А/С надбавку
+  const el=document.getElementById('wb_k4');
+  if(isSummer && (!el.value || el.value==='0')){
+    el.value='5';
+    const b=document.getElementById('k4AutoBadge');
+    if(b) b.style.display='inline';
+  }
+}
+function onSelChange(el){el.classList.toggle('need',!el.value);}
+
+function recalcFuel(){
+  const hs=parseFloat(v('wb_hs'))||0;
+  const k1=parseFloat(v('wb_k1'))||0;
+  const k3=parseFloat(v('wb_k3'))||0;
+  const k4=parseFloat(v('wb_k4'))||0;
+  const k5=parseFloat(v('wb_k5'))||0;
+  const kx=parseFloat(v('wb_kx'))||0;
+  const hn=hs*(1+(k1+k3+k4+k5+kx)/100);
+  setWB('wb_hn',hn.toFixed(2));
+  if(!lastResult)return;
+  const km=lastResult.tKm;
+  setWB('wb_km',km.toFixed(1));
+  const qn=0.01*hn*km;
+  const pr=parseFloat(v('wb_price'))||69.7;
+  const fs=parseFloat(v('wb_fs'));
+  const fhnD=document.getElementById('fc_hn_disp');if(fhnD)fhnD.textContent=hn.toFixed(2)+' л/100 км';
+  const fkmD=document.getElementById('fc_km_disp');if(fkmD)fkmD.textContent=(lastResult?lastResult.tKm.toFixed(1):'—')+' км';
+  document.getElementById('fc_qn').textContent=qn.toFixed(2)+' л';
+  document.getElementById('fc_cost').textContent=(qn*pr).toFixed(0)+' ₽';
+  document.getElementById('fc_fs').textContent=isNaN(fs)?'—':fs.toFixed(1)+' л';
+  document.getElementById('fc_rem').textContent=isNaN(fs)?'—':(fs-qn).toFixed(2)+' л';
+  // Show surcharge breakdown
+  const totalD=k1+k3+k4+k5+kx;
+  const fcBreak=document.getElementById('fc_breakdown');
+  if(fcBreak){
+    const k1lbl={0:'лето',10:'зима умер.',15:'зима холодн.',20:'зима сур.',25:'зима оч.сур.'}[k1]||'';
+    const k3lbl={0:'загород',5:'малый г.',10:'средн.',15:'кр.город',25:'мегаполис'}[k3]||'';
+    fcBreak.innerHTML=
+      '<div style="display:flex;justify-content:space-between;padding:1px 0"><span>К1 сезонная ('+k1lbl+')</span><span style="font-weight:700">+'+k1+'%</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:1px 0"><span>К3 городская ('+k3lbl+')</span><span style="font-weight:700;color:#0369a1">+'+k3+'%</span></div>'+
+      (k5>0?'<div style="display:flex;justify-content:space-between;padding:1px 0"><span>К5 возраст</span><span style="font-weight:700;color:#7c3aed">+'+k5+'%</span></div>':'')+
+      (k4>0?'<div style="display:flex;justify-content:space-between;padding:1px 0"><span>К4 А/С климат</span><span style="font-weight:700;color:#0891b2">+'+k4+'%</span></div>':'')+
+      (kx>0?'<div style="display:flex;justify-content:space-between;padding:1px 0"><span>Кх прочие</span><span style="font-weight:700">+'+kx+'%</span></div>':'')+
+      '<div style="display:flex;justify-content:space-between;border-top:1px solid #bfdbfe;margin-top:2px;padding-top:2px;font-weight:700"><span>Σ надбавка D</span><span>+'+totalD+'%</span></div>';
+  }
+  document.getElementById('fcalc').style.display='block';
+}
+
+function calcOdo(){
+  const s=parseFloat(v('wb_odo_s'));
+  if(!isNaN(s)&&lastResult)setWB('wb_odo_e',(s+lastResult.tKm).toFixed(0));
+}
+
+function updSigns(){
+  document.getElementById('sg_drv').textContent=v('wb_drv');
+  document.getElementById('sg_mech').textContent=v('wb_mech');
+  document.getElementById('sg_disp').textContent=v('wb_disp');
+}
+
+function clearWB(){
+  ['wb_org','wb_okpo','wb_inn','wb_kpp','wb_ogrn','wb_addr','wb_num','wb_date','wb_pf','wb_pt',
+   'wb_car','wb_plate','wb_garage','wb_year','wb_vin','wb_vtype','wb_odo_s','wb_fs','wb_drv','wb_lic','wb_hs','wb_price','wb_kx'].forEach(id=>setWB(id,''));
+  setWB('wb_odo_e','');setWB('wb_hn','');setWB('wb_km','');
+  ['wb_cat','wb_fuel_type','wb_k1','wb_k3','wb_k4','wb_k5','wb_mok'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.add('need');}});
+  const b3=document.getElementById('k3AutoBadge');if(b3)b3.style.display='none';
+  const a3=document.getElementById('wb_k3_auto');if(a3)a3.style.display='none';
+  const b5=document.getElementById('k5AutoBadge');if(b5)b5.style.display='none';
+  const h5=document.getElementById('wb_k5_hint');if(h5){h5.style.display='none';}
+  const b4=document.getElementById('k4AutoBadge');if(b4)b4.style.display='none';
+  document.getElementById('wbRbody').innerHTML='<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:14px;font-size:11px">Постройте маршрут и нажмите «Перенести в путевой лист»</td></tr>';
+  document.getElementById('wbBadge').style.display='none';
+  document.getElementById('fcalc').style.display='none';
+  document.getElementById('orgSel').value='';
+  const vs=document.getElementById('vehSel');if(vs)vs.value='';
+  updSigns();
+}
+
+function onPriceChange(){
+  setWB('wb_price',v('fuelPrice'));
+  recalcFuel();
+  syncMapSummary();
+}
+
+function syncMapSummary(){
+  if(!lastResult) return;
+  const pr=parseFloat(v('fuelPrice'))||69.7;
+  document.getElementById('sCost').textContent=(lastResult.tFuel*pr).toFixed(0)+' ₽';
+  // Also show norm in summary
+  const hs=parseFloat(v('wb_hs'))||0;
+  const k1=parseFloat(v('wb_k1'))||0;
+  const k3=parseFloat(v('wb_k3'))||0;
+  const k4=parseFloat(v('wb_k4'))||0;
+  const k5=parseFloat(v('wb_k5'))||0;
+  const kx=parseFloat(v('wb_kx'))||0;
+  const hn=hs>0?hs*(1+(k1+k3+k4+k5+kx)/100):null;
+  const fuelEl=document.getElementById('sFuel');
+  if(hn&&lastResult.tKm){
+    const qn=0.01*hn*lastResult.tKm;
+    fuelEl.textContent=qn.toFixed(2)+' л (Hн='+hn.toFixed(1)+')';
+  }
+}
+
+// ════════════════════════════
+// PRINT
+// ════════════════════════════
+function printWB(){
+  const g=id=>esc(v(id)||'___');
+  const rt=document.getElementById('wbRbody').innerHTML;
+  const h='<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Путевой лист '+g('wb_num')+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:10pt;margin:2cm;color:#000}'
+    +'h1{text-align:center;font-size:14pt;font-weight:700}h2{font-size:10pt;font-weight:700;border-bottom:1.5px solid #333;padding-bottom:3px;margin:13px 0 6px}'
+    +'table{border-collapse:collapse;width:100%;margin:6px 0}th,td{border:1px solid #ccc;padding:5px 8px;font-size:9pt}td:nth-child(3),td:nth-child(4){text-align:right}'
+    +'th{background:#e8eef7;font-weight:700}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}'
+    +'.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}.lbl{font-size:8pt;color:#666;margin-bottom:1px}'
+    +'.val{font-weight:700;border-bottom:1px solid #999;min-height:17px;padding:1px 2px}.nb{background:#eff6ff;border:1px solid #bfdbfe;padding:8px 12px;border-radius:4px;margin:7px 0;font-size:9pt}'
+    +'.nr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed #bfdbfe}.nr:last-child{border:none;font-weight:700}'
+    +'.sig{display:flex;justify-content:space-between;margin-top:40px;gap:20px}.si{flex:1;text-align:center;border-top:1px solid #333;padding-top:3px;font-size:8pt;color:#555}'
+    +'hr{border:none;border-top:1px solid #333;margin:6px 0}</style></head><body>'
+    +'<h1>ПУТЕВОЙ ЛИСТ ЛЕГКОВОГО АВТОМОБИЛЯ</h1>'
+    +'<p style="text-align:center;font-size:8pt;color:#777;margin-bottom:8px">Форма ОКУД 0345001 (форма №3) · Расчёт по нормам Минтранса РФ, Распоряжение №АМ-23-р</p><hr>'
+    +'<div class="g2"><div><div class="lbl">Организация / ИП</div><div class="val">'+g('wb_org')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">ИНН / КПП</div><div class="val">'+g('wb_inn')+' / '+g('wb_kpp')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">ОГРН / ЕГРИП</div><div class="val">'+g('wb_ogrn')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">Адрес</div><div class="val">'+g('wb_addr')+'</div></div>'
+    +'<div><div class="lbl">Путевой лист №</div><div class="val">'+g('wb_num')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">ОКПО</div><div class="val">'+g('wb_okpo')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">Дата выдачи</div><div class="val">'+g('wb_date')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">Период</div><div class="val">'+g('wb_pf')+' — '+g('wb_pt')+'</div></div></div>'
+    +'<h2>Транспортное средство</h2>'
+    +'<div class="g3"><div><div class="lbl">Марка / модель</div><div class="val">'+g('wb_car')+'</div></div>'
+    +'<div><div class="lbl">Гос. номер</div><div class="val">'+g('wb_plate')+'</div></div>'
+    +'<div><div class="lbl">Гаражный номер</div><div class="val">'+g('wb_garage')+'</div></div>'
+    +'<div><div class="lbl">Год выпуска</div><div class="val">'+g('wb_year')+'</div></div>'
+    +'<div><div class="lbl">VIN</div><div class="val">'+g('wb_vin')+'</div></div>'
+    +'<div><div class="lbl">Тип ТС</div><div class="val">'+g('wb_vtype')+'</div></div>'
+    +'<div><div class="lbl">Спидометр нач., км</div><div class="val">'+g('wb_odo_s')+'</div></div>'
+    +'<div><div class="lbl">Спидометр кон., км</div><div class="val">'+g('wb_odo_e')+'</div></div>'
+    +'<div><div class="lbl">Топливо в баке нач., л</div><div class="val">'+g('wb_fs')+'</div></div></div>'
+    +'<h2>Водитель</h2>'
+    +'<div class="g3"><div><div class="lbl">ФИО</div><div class="val">'+g('wb_drv')+'</div></div>'
+    +'<div><div class="lbl">Удостоверение №</div><div class="val">'+g('wb_lic')+'</div></div>'
+    +'<div><div class="lbl">Категория</div><div class="val">'+g('wb_cat')+'</div></div></div>'
+    +'<h2>Маршрут следования</h2>'
+    +'<table style="border-collapse:collapse;width:100%;margin:6px 0"><thead><tr>'+'<th style="background:#1e3a5f;color:#fff;padding:5px 8px;text-align:left;font-size:9pt;width:40px">#</th>'+'<th style="background:#1e3a5f;color:#fff;padding:5px 8px;text-align:left;font-size:9pt">Пункт назначения</th>'+'<th style="background:#1e3a5f;color:#fff;padding:5px 8px;text-align:right;font-size:9pt;width:100px">Расстояние, км</th>'+'<th style="background:#1e3a5f;color:#fff;padding:5px 8px;text-align:right;font-size:9pt;width:100px">Накоплено, км</th>'+'</tr></thead><tbody>'+rt+'</tbody></table>'
+    +'<h2>Расчёт расхода топлива (Распоряжение Минтранса РФ №АМ-23-р)</h2>'    +'<div class="nb">'    +'<div class="nr"><span>Вид топлива</span><span>'+g('wb_fuel_type')+'</span></div>'    +'<div class="nr"><span>Базовая норма Hs</span><span>'+g('wb_hs')+' л/100 км</span></div>'    +'<div style="background:#f0f4ff;border-radius:5px;padding:6px 10px;margin:5px 0;font-size:9pt">'    +'<div style="font-weight:700;margin-bottom:4px">Повышающие надбавки D (суммарно):</div>'    +(function(){      const k1=parseInt(g('wb_k1'))||0;      const k3=parseInt(g('wb_k3'))||0;      const k4=parseInt(g('wb_k4'))||0;      const k5=parseInt(g('wb_k5'))||0;      const kx=parseInt(g('wb_kx'))||0;      const total=k1+k3+k4+k5+kx;      const k1Label={'0':'лето','10':'зима умер.','15':'зима холодн.','20':'зима суровый','25':'зима оч. суровый'}[String(k1)]||'';      const k3Label={'0':'сельская','5':'малый город','10':'100–250 тыс.','15':'250–1000 тыс.','25':'мегаполис'}[String(k3)]||'';      const k3Hint=esc(document.getElementById('wb_k3_auto')?.textContent||'');      let html='';      html+='<div class="nr" style="color:#555"><span>К1 — сезонная надбавка ('+k1Label+')</span><span>+'+k1+'%</span></div>';      html+='<div class="nr" style="color:#555"><span>К3 — городская надбавка ('+k3Label+')'+(k3Hint?' <i style="color:#0369a1">'+k3Hint+'</i>':'')+'</span><span>+'+k3+'%</span></div>';      if(k5>0) html+='<div class="nr" style="color:#555"><span>К5 — возрастная надбавка (авто '+(new Date().getFullYear()-(parseInt(g('wb_year'))||2020))+' лет)</span><span>+'+k5+'%</span></div>';      if(k4>0) html+='<div class="nr" style="color:#555"><span>К4 — А/С и климат-контроль</span><span>+'+k4+'%</span></div>';      if(kx>0) html+='<div class="nr" style="color:#555"><span>Кх — прочие надбавки</span><span>+'+kx+'%</span></div>';      html+='<div class="nr" style="font-weight:700;border-top:1px solid #bfdbfe;margin-top:3px;padding-top:3px"><span>Σ суммарная надбавка D</span><span>+'+total+'%</span></div>';      return html;    })()    +'</div>'    +'<div class="nr"><span><b>Итоговая норма Hн = Hs × (1 + D/100)</b></span><span><b>'+g('wb_hn')+' л/100 км</b></span></div>'    +'<div class="nr"><span>Общий пробег L</span><span>'+g('wb_km')+' км</span></div>'    +'<div class="nr"><span>Топливо в баке при выезде</span><span>'+g('wb_fs')+' л</span></div>'    +'<div class="nr" style="background:#fff8e1"><span><b>Qн = 0.01 × Hн × L</b></span><span><b>'+document.getElementById('fc_qn').textContent+'</b></span></div>'    +'<div class="nr"><span>Стоимость ('+g('wb_price')+' руб/л)</span><span>'+document.getElementById('fc_cost').textContent+'</span></div>'    +'<div class="nr"><span>Остаток в баке (расч.)</span><span>'+document.getElementById('fc_rem').textContent+'</span></div></div>'
+    +'<h2>Отметки</h2>'
+    +'<div class="g2"><div><div class="lbl">Механик</div><div class="val">'+g('wb_mech')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">Состояние ТС</div><div class="val">'+g('wb_mok')+'</div></div>'
+    +'<div><div class="lbl">Диспетчер</div><div class="val">'+g('wb_disp')+'</div>'
+    +'<div class="lbl" style="margin-top:4px">Время выезда / возврата</div><div class="val">'+g('wb_tout')+' / '+g('wb_tin')+'</div></div></div>'
+    +'<div class="sig">'
+    +'<div class="si">Водитель ________________<br>'+g('wb_drv')+'</div>'
+    +'<div class="si">Механик ________________<br>'+g('wb_mech')+'</div>'
+    +'<div class="si">Диспетчер ________________<br>'+g('wb_disp')+'</div>'
+    +'</div>'
+    +'<p style="margin-top:24px;font-size:7pt;color:#aaa;text-align:center">Расчёт по нормам Минтранса РФ, Распоряжение №АМ-23-р от 14.03.2008</p>'
+    +'</body></html>';
+  const w=window.open('','_blank');
+  if(!w){alert('Браузер заблокировал окно печати — разрешите всплывающие окна для этой страницы.');return;}
+  w.document.write(h);w.document.close();setTimeout(()=>w.print(),400);
+}
+
+// ════════════════════════════
+// WP MANAGEMENT
+// ════════════════════════════
+function clickDest(d){if(plannerOn)wps.find(w=>w.id===d.id)?removeWP(d.id):addWP(d);}
+// a built route no longer matches the point list -> drop it (stale km/fuel would leak into the waybill)
+function invalidateRoute(){
+  if(!lastResult)return;
+  lastResult=null;
+  lrRoutes.clearLayers();lrLabels.clearLayers();lrWP.clearLayers();
+  document.getElementById('sumBox').style.display='none';
+  const bs=document.getElementById('btnSend');bs.disabled=true;bs.style.opacity='.4';bs.style.pointerEvents='none';bs.style.boxShadow='none';bs.style.animation='none';
+  const g=document.getElementById('btnGPX');if(g){g.disabled=true;g.style.opacity='.4';g.style.pointerEvents='none';}
+}
+function addWP(d){if(!wps.find(w=>w.id===d.id)){wps.push(d);invalidateRoute();refresh();}}
+function removeWP(id){wps=wps.filter(w=>w.id!==id);invalidateRoute();refresh();}
+
+function refresh(){
+  renderWPs();renderAllPts();updMarkers();
+  const has=wps.length>0;
+  document.getElementById('btnB').disabled=!has;
+  document.getElementById('btnO').disabled=wps.length<2;
+  if(!has){document.getElementById('sumBox').style.display='none';const bs2=document.getElementById('btnSend');
+    bs2.disabled=true;bs2.style.opacity='.4';bs2.style.pointerEvents='none';
+    bs2.style.boxShadow='none';bs2.style.animation='none';}
+}
+
+function updMarkers(){
+  DEST.forEach(d=>{
+    const m=DM[d.id];if(!m)return;
+    const i=wps.findIndex(w=>w.id===d.id);
+    m.setIcon(i>=0?mkNIcon(i+1,CC[d.cityType]):mkDIcon(CC[d.cityType]));
+    m.setZIndexOffset(i>=0?600+i:100);
+  });
+}
+
+function renderWPs(){
+  const div=document.getElementById('wpList');
+  if(!wps.length){div.innerHTML='<p style="color:#94a3b8;font-size:11px">Нет точек. Кликайте по карте или ищите выше.</p>';return;}
+  div.innerHTML=wps.map((w,i)=>{
+    const seg=lastResult?.segs[i];
+    const dist=seg?` <span class="wd">${seg.km.toFixed(1)} км</span>`:'';
+    return `<div class="wp" draggable="true" ondragstart="dragStart(event,${i})" ondragover="event.preventDefault()" ondrop="dragDrop(event,${i})">
+      <span style="color:#94a3b8;font-size:12px">⠿</span>
+      <div class="wn" style="background:${SC[(i+1)%SC.length]}">${i+1}</div>
+      <div class="wa">${esc(w.address)}${dist}</div>
+      <button class="wdel" onclick="removeWP(${w.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function renderAllPts(){
+  const div=document.getElementById('allPts');
+  div.innerHTML=DEST.map(d=>{
+    const inR=!!wps.find(w=>w.id===d.id);
+    return `<div class="pt ${inR?'inr':''}" onclick="clickDest(DEST.find(x=>x.id===${d.id}))">
+      <div class="pdot" style="background:${CC[d.cityType]}"></div>
+      <span class="pcity">${esc(d.cityName)}</span>
+      <span class="paddr">${esc(d.address)}</span>
+      <button class="padd ${inR?'done':''}" onclick="event.stopPropagation();clickDest(DEST.find(x=>x.id===${d.id}))">${inR?'✓':'+'}</button>
+    </div>`;
+  }).join('');
+}
+
+// Drag & drop
+function dragStart(e,i){dragIdx=i;}
+function dragDrop(e,to){
+  e.preventDefault();
+  if(dragIdx===null||dragIdx===to)return;
+  const m=wps.splice(dragIdx,1)[0];wps.splice(to,0,m);dragIdx=null;invalidateRoute();refresh();
+}
+
+// ════════════════════════════
+// OPTIMIZE
+// ════════════════════════════
+function optimizeRoute(){
+  if(wps.length<2)return;
+  const wasBuilt=!!lastResult;
+  const rem=[...wps],ord=[];let cur={lat:START.lat,lng:START.lng};
+  while(rem.length){
+    let bi=0,bd=Infinity;
+    rem.forEach((d,i)=>{const dd=haversine(cur.lat,cur.lng,d.lat,d.lng);if(dd<bd){bd=dd;bi=i;}});
+    ord.push(rem[bi]);cur=rem[bi];rem.splice(bi,1);
+  }
+  // 2-opt on the closed tour START -> points -> START
+  const P=[START,...ord,START],D=(a,b)=>haversine(a.lat,a.lng,b.lat,b.lng);
+  let improved=true;
+  while(improved){
+    improved=false;
+    for(let i=1;i<P.length-2;i++)for(let j=i+1;j<P.length-1;j++){
+      if(D(P[i-1],P[j])+D(P[i],P[j+1])<D(P[i-1],P[i])+D(P[j],P[j+1])-1e-9){
+        const seg=P.slice(i,j+1).reverse();P.splice(i,seg.length,...seg);improved=true;
+      }
+    }
+  }
+  wps=P.slice(1,-1);
+  invalidateRoute();refresh();if(wasBuilt)buildRoute();
+}
+
+// ════════════════════════════
+// TOGGLES
+// ════════════════════════════
+function togglePlanner(){
+  plannerOn=!plannerOn;
+  const b=document.getElementById('btnP');
+  b.textContent=plannerOn?'📍 Планировщик':'📍 Планировщик (выкл)';
+  b.classList.toggle('active',plannerOn);
+}
+function toggleSeason(){
+  if(building)return;
+  isSummer=!isSummer;
+  const b=document.getElementById('season');
+  b.textContent=isSummer?'☀ Лето':'❄ Зима';
+  b.className=isSummer?'s-sum':'s-win';
+  if(lastResult)buildRoute();
+}
+function clearAll(){
+  wps=[];lastResult=null;
+  lrRoutes.clearLayers();lrLabels.clearLayers();lrWP.clearLayers();
+  document.getElementById('sumBox').style.display='none';
+  const bsX=document.getElementById('btnSend');bsX.disabled=true;bsX.style.opacity='.4';bsX.style.pointerEvents='none';bsX.style.animation='none';
+  document.getElementById('btnC').disabled=true;
+  refresh();
+}
+
+// ════════════════════════════
+// VIEW
+// ════════════════════════════
+function setView(v){
+  const mp=document.getElementById('mapWrap');
+  const sb=document.getElementById('sidebar');
+  const wb=document.getElementById('wbPanel');
+  const ip=document.getElementById('infoPanel');
+  ['vM','vS','vW','vI'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
+  // hide all first
+  mp.style.display='none';sb.style.display='none';
+  wb.classList.remove('on');if(ip)ip.style.display='none';
+  if(v==='map'){
+    mp.style.display='block';sb.style.display='flex';
+    document.getElementById('vM').classList.add('on');
+  } else if(v==='wb'){
+    wb.classList.add('on');
+    document.getElementById('vW').classList.add('on');
+  } else if(v==='info'){
+    if(ip)ip.style.display='flex';
+    document.getElementById('vI').classList.add('on');
+  } else { // split
+    mp.style.display='block';sb.style.display='flex';wb.classList.add('on');
+    document.getElementById('vS').classList.add('on');
+  }
+  setTimeout(()=>map.invalidateSize(),100);
+}
+
+// ════════════════════════════
+// SEARCH
+// ════════════════════════════
+function showTab(t){
+  document.querySelectorAll('.stab').forEach((el,i)=>el.classList.toggle('on',['r','p'][i]===t));
+  document.querySelectorAll('.tpane').forEach((el,i)=>el.classList.toggle('on',['r','p'][i]===t));
+}
+function doSearch(q){
+  const box=document.getElementById('sres');
+  document.getElementById('sclr').style.display=q?'block':'none';
+  if(!q.trim()){box.style.display='none';return;}
+  const ql=q.toLowerCase();
+  const ms=DEST.filter(d=>d.address.toLowerCase().includes(ql)||d.cityName.toLowerCase().includes(ql)).slice(0,8);
+  if(!ms.length){box.innerHTML='<div class="si" style="color:#94a3b8">Ничего не найдено</div>';box.style.display='block';return;}
+  box.innerHTML=ms.map(d=>{
+    const inR=!!wps.find(w=>w.id===d.id);
+    return `<div class="si" onclick="pickSearch(${d.id})">
+      <div style="width:8px;height:8px;border-radius:50%;background:${CC[d.cityType]};flex-shrink:0"></div>
+      ${esc(d.address)}
+      ${inR?'<span style="color:#16a34a;margin-left:auto;font-size:10px">✓</span>':''}
+    </div>`;
+  }).join('');
+  box.style.display='block';
+}
+function pickSearch(id){
+  const d=DEST.find(x=>x.id===id);if(!d)return;
+  clearSearch();
+  wps.find(w=>w.id===id)?removeWP(id):addWP(d);
+  map.flyTo([d.lat,d.lng],13,{duration:.7});
+}
+function clearSearch(){
+  document.getElementById('sinp').value='';
+  document.getElementById('sres').style.display='none';
+  document.getElementById('sclr').style.display='none';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('#sbox'))clearSearch();});
+
+// ════════════════════════════
+// ORG DIRECTORY
+// ════════════════════════════
+const DEF_ORGS=[
+  {name:'ООО "Наш Выбор"',  inn:'2310238215',kpp:'231001001',ogrn:'1242300051223',okpo:'',addr:'350038, Краснодарский край, г. Краснодар, ул. Им. Володарского, д. 8/1, офис 5',phone:''},
+  {name:'Гермес ООО',        inn:'2310190997',kpp:'231001001',ogrn:'1162375003537',okpo:'',addr:'350038, Краснодарский край, г. Краснодар, ул. Им. Володарского, д. 8/1',phone:''},
+  {name:'КУБАНЬТОРГ ООО',   inn:'2310050943',kpp:'231001001',ogrn:'1142310003824',okpo:'',addr:'350038, Краснодарский край, г. Краснодар, ул. Им. Володарского, д. 8/1',phone:''},
+  {name:'ЮГТОРГ ООО',        inn:'2312273141',kpp:'231201001',ogrn:'1182375058887',okpo:'',addr:'350066, Краснодарский край, г. Краснодар, ул. Сормовская, д. 118, кв. 49',phone:''},
+  {name:'ПЯТНИЦА ООО',       inn:'2312284087',kpp:'231201001',ogrn:'1192375047028',okpo:'',addr:'350065, Краснодарский край, г. Краснодар, ул. Им. Писателя Знаменского пр-кт, д. 31, корп. 1',phone:''},
+  {name:'Челухин Е.В. ИП',  inn:'234305505336',kpp:'',ogrn:'416237200113238',okpo:'',addr:'350055, Краснодарский край, г. Краснодар, ул. Знаменская, д. 66',phone:''},
+];
+let ORGS=[];
+
+function loadOrgs(){
+  try{
+    // версия справочника — при изменении сбрасываем кэш
+    const VER='v3';
+    const sv=localStorage.getItem('wb_orgs_ver');
+    const s=localStorage.getItem('wb_orgs');
+    ORGS=(s&&sv===VER)?JSON.parse(s):JSON.parse(JSON.stringify(DEF_ORGS));
+    if(sv!==VER){localStorage.setItem('wb_orgs_ver',VER);saveOrgs();}
+  }catch(e){ORGS=JSON.parse(JSON.stringify(DEF_ORGS));}
+  fillOrgSel();
+}
+function saveOrgs(){try{localStorage.setItem('wb_orgs',JSON.stringify(ORGS));}catch(e){}}
+
+function fillOrgSel(){
+  const sel=document.getElementById('orgSel');
+  sel.innerHTML='<option value="">— выберите из справочника —</option>';
+  ORGS.forEach((o,i)=>{
+    const op=document.createElement('option');
+    op.value=i;
+    op.textContent=o.name+(o.inn?' (ИНН: '+o.inn+')':'');
+    sel.appendChild(op);
+  });
+}
+
+function applyOrg(sel){
+  const i=parseInt(sel.value);
+  if(isNaN(i)||i<0||i>=ORGS.length)return;
+  const o=ORGS[i];
+  setWB('wb_org',o.name);
+  setWB('wb_okpo',o.okpo||'');
+  setWB('wb_inn',o.inn||'');
+  setWB('wb_kpp',o.kpp||'');
+  setWB('wb_ogrn',o.ogrn||'');
+  setWB('wb_addr',o.addr||'');
+}
+
+function openOrgModal(){
+  renderOrgTbl();
+  document.getElementById('orgModal').classList.add('on');
+}
+function closeOrgModal(){document.getElementById('orgModal').classList.remove('on');}
+function saveAndClose(){saveOrgs();fillOrgSel();closeOrgModal();}
+
+function renderOrgTbl(){
+  const tb=document.getElementById('orgTbody');
+  if(!ORGS.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:14px">Справочник пуст</td></tr>';return;}
+  tb.innerHTML=ORGS.map((o,i)=>`
+    <tr>
+      <td style="text-align:center;color:#94a3b8">${i+1}</td>
+      <td><div style="font-weight:600">${esc(o.name)}</div>${o.addr?'<div style="font-size:10px;color:#64748b">'+esc(o.addr)+'</div>':''}</td>
+      <td><input value="${esc(o.inn)}" onchange="ORGS[${i}].inn=this.value" style="width:100%;border:1px solid #e2e8f0;border-radius:3px;padding:3px 5px;font-size:11px"></td>
+      <td><input value="${esc(o.ogrn)}" onchange="ORGS[${i}].ogrn=this.value" style="width:100%;border:1px solid #e2e8f0;border-radius:3px;padding:3px 5px;font-size:11px"></td>
+      <td style="text-align:center"><button onclick="delOrg(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:18px;line-height:1">×</button></td>
+    </tr>`).join('');
+}
+
+function addOrg(){
+  const name=document.getElementById('nName').value.trim();
+  if(!name){document.getElementById('nName').style.borderColor='#dc2626';document.getElementById('nName').focus();return;}
+  document.getElementById('nName').style.borderColor='';
+  ORGS.push({name,
+    inn:document.getElementById('nInn').value.trim(),
+    kpp:document.getElementById('nKpp').value.trim(),
+    ogrn:document.getElementById('nOgrn').value.trim(),
+    okpo:document.getElementById('nOkpo').value.trim(),
+    addr:document.getElementById('nAddr').value.trim(),
+    phone:document.getElementById('nPhone').value.trim()});
+  saveOrgs();renderOrgTbl();fillOrgSel();
+  ['nName','nOkpo','nInn','nKpp','nOgrn','nAddr','nPhone'].forEach(id=>document.getElementById(id).value='');
+}
+
+function delOrg(i){
+  if(!confirm('Удалить «'+ORGS[i].name+'»?'))return;
+  ORGS.splice(i,1);saveOrgs();renderOrgTbl();fillOrgSel();
+}
+
+document.getElementById('orgModal').addEventListener('click',function(e){if(e.target===this)closeOrgModal();});
+
+// ════════════════════════════
+// INIT
+// ════════════════════════════
+loadOrgs();
+refresh();
+renderAllPts();
+loadTemplate();
+document.getElementById('wb_date').value=todayStr();
+document.querySelectorAll('.f select').forEach(s=>{if(!s.value)s.classList.add('need');});
+
+// ════════════════════════════
+// VEHICLE DIRECTORY
+// ════════════════════════════
+const DEF_VEHS=[
+  {plate:'',           car:'УАЗ-3163-10 «Патриот» (ЗМЗ-40900R)', year:2013, vtype:'Внедорожник', fuel:'АИ-92', hs:13.5, garage:'', vin:'', tank:68,  driver:'Сандрин Юрий Викторович'},
+  {plate:'',           car:'Lexus LX 470 (8V-4,664)',              year:1999, vtype:'Внедорожник', fuel:'АИ-95', hs:18.9, garage:'', vin:'', tank:93,  driver:'Сандрин Юрий Викторович'},
+];
+let VEHS=[];
+
+function loadVehs(){
+  // версия справочника — при изменении DEF_VEHS сбрасываем кэш; иначе сохраняем добавленные пользователем ТС
+  const VER='v3';
+  try{
+    const s=localStorage.getItem('wb_vehs');
+    VEHS=(s&&localStorage.getItem('wb_vehs_ver')===VER)?JSON.parse(s):JSON.parse(JSON.stringify(DEF_VEHS));
+    localStorage.setItem('wb_vehs_ver',VER);saveVehs();
+  }catch(e){VEHS=JSON.parse(JSON.stringify(DEF_VEHS));}
+  fillVehSel();
+}
+function resetVehs(){
+  if(!confirm('Сбросить справочник ТС к данным по умолчанию?'))return;
+  try{localStorage.removeItem('wb_vehs');localStorage.removeItem('wb_vehs_ver');}catch(e){}
+  VEHS=JSON.parse(JSON.stringify(DEF_VEHS));
+  saveVehs();renderVehTbl();fillVehSel();
+  alert('Сброшено! Загружено записей: '+VEHS.length);
+}
+function saveVehs(){try{localStorage.setItem('wb_vehs',JSON.stringify(VEHS));}catch(e){}}
+
+function fillVehSel(){
+  const sel=document.getElementById('vehSel');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— выберите из справочника ТС —</option>';
+  VEHS.forEach((v,i)=>{
+    const op=document.createElement('option');
+    op.value=i;
+    op.textContent=(v.plate?v.plate+' — ':'')+v.car+(v.hs?' ('+v.hs+' л/100км)':'');
+    sel.appendChild(op);
+  });
+}
+
+function applyVeh(sel){
+  const i=parseInt(sel.value);
+  if(isNaN(i)||i<0||i>=VEHS.length)return;
+  const v=VEHS[i];
+  setWB('wb_car',v.car||'');
+  setWB('wb_plate',v.plate||'');
+  setWB('wb_garage',v.garage||'');
+  setWB('wb_year',v.year||'');
+  setWB('wb_vin',v.vin||'');
+  setWB('wb_vtype',v.vtype||'');
+  setWB('wb_hs',v.hs||'');
+  // fill tank as fuel start suggestion
+  if(v.tank){setWB('wb_fs',v.tank);}
+  // driver from vehicle record
+  if(v.driver){setWB('wb_drv',v.driver);updSigns();}
+  // auto age surcharge
+  autoK5();
+  // auto AC surcharge
+  autoK4();
+  // set fuel type
+  const ftEl=document.getElementById('wb_fuel_type');
+  if(ftEl&&v.fuel){ftEl.value=v.fuel;onSelChange(ftEl);}
+  recalcFuel();
+}
+
+function openVehModal(){renderVehTbl();document.getElementById('vehModal').style.display='flex';}
+function closeVehModal(){document.getElementById('vehModal').style.display='none';}
+function saveVehAndClose(){saveVehs();fillVehSel();closeVehModal();}
+
+function renderVehTbl(){
+  const tb=document.getElementById('vehTbody');
+  if(!VEHS.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:14px">Справочник пуст</td></tr>';return;}
+  tb.innerHTML=VEHS.map((v,i)=>`
+    <tr style="${i%2===0?'background:#fff':'background:#fafafa'}">
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;color:#94a3b8;text-align:center">${i+1}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#d97706">${esc(v.plate)||'—'}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb">
+        <div style="font-weight:600">${esc(v.car)}</div>
+        ${v.year?'<div style="font-size:10px;color:#64748b">'+esc(v.year)+' г.'+( v.vin?' · '+esc(v.vin):'')+'</div>':''}
+      </td>
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${esc(v.vtype)||'—'}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px">${esc(v.fuel)||'—'}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700;color:#1e40af">${v.hs||'—'}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;text-align:center">
+        <button onclick="delVeh(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:18px;line-height:1">×</button>
+      </td>
+    </tr>`).join('');
+}
+
+function addVeh(){
+  const plate=document.getElementById('vn_plate').value.trim();
+  const car=document.getElementById('vn_car').value.trim();
+  if(!plate||!car){
+    if(!plate){document.getElementById('vn_plate').style.borderColor='#dc2626';document.getElementById('vn_plate').focus();}
+    else{document.getElementById('vn_car').style.borderColor='#dc2626';document.getElementById('vn_car').focus();}
+    return;
+  }
+  ['vn_plate','vn_car'].forEach(id=>document.getElementById(id).style.borderColor='');
+  VEHS.push({
+    plate,car,
+    year:parseInt(document.getElementById('vn_year').value)||'',
+    vtype:document.getElementById('vn_type').value.trim(),
+    fuel:document.getElementById('vn_fuel').value,
+    hs:parseFloat(document.getElementById('vn_hs').value)||'',
+    garage:document.getElementById('vn_garage').value.trim(),
+    vin:document.getElementById('vn_vin').value.trim(),
+    tank:parseFloat(document.getElementById('vn_tank').value)||'',
+  });
+  saveVehs();renderVehTbl();fillVehSel();
+  ['vn_plate','vn_car','vn_year','vn_type','vn_garage','vn_vin','vn_tank'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('vn_fuel').value='';
+  document.getElementById('vn_hs').value='';
+}
+
+function delVeh(i){
+  if(!confirm('Удалить ТС «'+(VEHS[i].plate?VEHS[i].plate+' — ':'')+VEHS[i].car+'»?'))return;
+  VEHS.splice(i,1);saveVehs();renderVehTbl();fillVehSel();
+}
+
+document.getElementById('vehModal').addEventListener('click',function(e){if(e.target===this)closeVehModal();});
+
+loadVehs();
+
+
+// ════════════════════════════
+// FUEL TYPE ON MAP
+// ════════════════════════════
+const FUEL_PRICES={'АИ-92':64.5,'АИ-95':69.7,'АИ-98':76.0,'АИ-100':82.0,'ДТ':68.5,'ДТ Зимнее':70.0,'СУГ':32.0,'КПГ':28.0};
+let mapFuelType='АИ-95';
+
+function onMapFuelChange(sel){
+  mapFuelType=sel.value;
+  const defPrice=FUEL_PRICES[mapFuelType]||69.7;
+  document.getElementById('fuelPrice').value=defPrice.toFixed(1);
+  document.getElementById('fuelPriceLabel').textContent=mapFuelType+', руб/л:';
+  // sync to waybill fuel type
+  const wbFT=document.getElementById('wb_fuel_type');
+  if(wbFT){wbFT.value=mapFuelType;onSelChange(wbFT);}
+  onPriceChange();
+}
+
+// ════════════════════════════
+// START POINT
+// ════════════════════════════
+function updateStartLabel(){
+  const el=document.getElementById('startCurrentLabel');
+  if(el) el.textContent=START.address;
+}
+
+function openStartModal(){
+  updateStartLabel();
+  document.getElementById('startAddr').value=START.address;
+  document.getElementById('startLat').value=START.lat;
+  document.getElementById('startLng').value=START.lng;
+  document.getElementById('startCityType').value=START.cityType||'big';
+  document.getElementById('startModal').style.display='flex';
+}
+function closeStartModal(){document.getElementById('startModal').style.display='none';}
+
+function setStartPreset(addr,lat,lng,cityType,cityName){
+  document.getElementById('startAddr').value=addr;
+  document.getElementById('startLat').value=lat;
+  document.getElementById('startLng').value=lng;
+  document.getElementById('startCityType').value=cityType;
+  applyStartManual();
+}
+
+function applyStartManual(){
+  const addr=document.getElementById('startAddr').value.trim();
+  const lat=parseFloat(document.getElementById('startLat').value);
+  const lng=parseFloat(document.getElementById('startLng').value);
+  const ct=document.getElementById('startCityType').value;
+  if(!addr){document.getElementById('startAddr').style.borderColor='#dc2626';return;}
+  if(isNaN(lat)||isNaN(lng)){
+    alert('Введите координаты (широту и долготу). Координаты можно скопировать из Яндекс.Карт.');
+    return;
+  }
+  START={id:'S',address:addr,lat,lng,cityType:ct,cityName:addr.split(',')[0]};
+  if(startMarker){
+    startMarker.setLatLng([lat,lng]);
+    startMarker.setPopupContent('<div class="ptit">📍 Точка выезда</div>'+esc(addr));
+  }
+  updateStartLabel();
+  map.setView([lat,lng],12);
+  closeStartModal();
+  if(lastResult) buildRoute(); // rebuild if route exists
+}
+
+function resetStart(){
+  START={id:'S',address:'Краснодар, ул. Володарского, 8/1',lat:45.028432,lng:39.004445,cityType:'big',cityName:'Краснодар'};
+  if(startMarker){
+    startMarker.setLatLng([START.lat,START.lng]);
+    startMarker.setPopupContent('<div class="ptit">📍 Точка выезда</div>'+esc(START.address));
+  }
+  document.getElementById('startAddr').value=START.address;
+  document.getElementById('startLat').value=START.lat;
+  document.getElementById('startLng').value=START.lng;
+  updateStartLabel();
+  map.setView([START.lat,START.lng],9);
+  closeStartModal();
+}
+
+document.getElementById('startModal').addEventListener('click',function(e){if(e.target===this)closeStartModal();});
+
+
+// ════════════════════════════
+// GPX EXPORT
+// ════════════════════════════
+function exportGPX(){
+  if(!lastResult||!wps.length){alert('Сначала постройте маршрут!');return;}
+  const date=new Date().toISOString();
+  let wptXml='';
+  // Start point
+  wptXml+=`  <wpt lat="${START.lat}" lon="${START.lng}">\n    <name>Старт: ${escXml(START.address)}</name>\n    <sym>Flag, Green</sym>\n  </wpt>\n`;
+  wps.forEach((wp,i)=>{
+    wptXml+=`  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    <name>${i+1}. ${escXml(wp.address)}</name>\n    <sym>Shopping</sym>\n  </wpt>\n`;
+  });
+  // Track from route segments
+  const routeDate=new Date().toLocaleDateString('ru-RU');
+  let trkXml='  <trk>\n    <name>Маршрут '+routeDate+'</name>\n    <trkseg>\n';
+  lastResult.segs.forEach(seg=>{
+    (seg.coords||[[seg.from.lat,seg.from.lng],[seg.to.lat,seg.to.lng]]).forEach(c=>{
+      trkXml+=`      <trkpt lat="${c[0]}" lon="${c[1]}"></trkpt>\n`;
+    });
+  });
+  trkXml+='    </trkseg>\n  </trk>\n';
+
+  const gpx=`<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Планировщик маршрутов" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Маршрут ${new Date().toLocaleDateString('ru-RU')}</name>
+    <time>${date}</time>
+    <desc>Маршрут: ${wps.length} точек, ${lastResult.tKm.toFixed(1)} км</desc>
+  </metadata>
+${wptXml}${trkXml}</gpx>`;
+
+  const blob=new Blob([gpx],{type:'application/gpx+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='marshut_'+todayStr()+'.gpx';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function escXml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ════════════════════════════
+// SAVE TEMPLATE
+// ════════════════════════════
+function saveTemplate(btn){
+  const data={
+    org:v('wb_org'), okpo:v('wb_okpo'), inn:v('wb_inn'), kpp:v('wb_kpp'),
+    ogrn:v('wb_ogrn'), addr:v('wb_addr'),
+    car:v('wb_car'), plate:v('wb_plate'), garage:v('wb_garage'),
+    year:v('wb_year'), vin:v('wb_vin'), vtype:v('wb_vtype'),
+    drv:v('wb_drv'), lic:v('wb_lic'), cat:v('wb_cat'),
+    hs:v('wb_hs'), fuel_type:v('wb_fuel_type'),
+    mech:v('wb_mech'), disp:v('wb_disp'),
+    mok:v('wb_mok'), price:v('wb_price'),
+    k1:v('wb_k1'), k3:v('wb_k3'), k4:v('wb_k4'), k5:v('wb_k5'), kx:v('wb_kx'),
+  };
+  try{
+    localStorage.setItem('wb_template',JSON.stringify(data));
+    // flash confirmation
+    const orig=btn.textContent;
+    btn.textContent='✓ Сохранено!';btn.style.background='#dcfce7';btn.style.color='#15803d';
+    setTimeout(()=>{btn.textContent=orig;btn.style.background='';btn.style.color='';},1500);
+  }catch(e){alert('Ошибка сохранения: '+e.message);}
+}
+
+function loadTemplate(){
+  try{
+    const s=localStorage.getItem('wb_template');
+    if(!s) return;
+    const d=JSON.parse(s);
+    const map={wb_org:'org',wb_okpo:'okpo',wb_inn:'inn',wb_kpp:'kpp',wb_ogrn:'ogrn',
+      wb_addr:'addr',wb_car:'car',wb_plate:'plate',wb_garage:'garage',
+      wb_year:'year',wb_vin:'vin',wb_vtype:'vtype',wb_drv:'drv',wb_lic:'lic',
+      wb_mech:'mech',wb_disp:'disp',wb_price:'price',wb_hs:'hs',wb_kx:'kx'};
+    Object.entries(map).forEach(([id,key])=>{if(d[key])setWB(id,d[key]);});
+    const selMap={wb_cat:'cat',wb_fuel_type:'fuel_type',wb_mok:'mok',
+      wb_k1:'k1',wb_k3:'k3',wb_k4:'k4',wb_k5:'k5'};
+    Object.entries(selMap).forEach(([id,key])=>{
+      const el=document.getElementById(id);
+      if(el&&d[key]){el.value=d[key];onSelChange(el);}
+    });
+    updSigns();
+  }catch(e){}
+}
+
+</script>
+
+</body>
+</html>
