@@ -176,3 +176,62 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
                 res.corr_not_ready = [c.num for c in not_ready]
         ret_results.append(res)
     return ret_results, corr_results
+
+
+# ── Этап 2: планирование проведения цепочки корректировок ───────────────────────
+# Эталон для BSL-процедуры ПровестиЦепочку (1c/СверкаВозвратов/.../ObjectModule.bsl).
+from datetime import datetime, time, timedelta
+
+
+def new_doc_date(current: datetime, posting_day: datetime) -> datetime:
+    """Дата проведения — только день; время суток исходной даты сохраняется."""
+    if current.date() == posting_day.date():
+        return current
+    return datetime.combine(posting_day.date(), time()) + (current - datetime.combine(current.date(), time()))
+
+
+def plan_chain(items, selected, dry_run=False):
+    """items — корректировки одного поступления по порядку даты/времени:
+    {"num", "date": datetime, "posted": bool}; selected — {num: datetime дня проведения}.
+
+    Возвращает записи [{"num", "ok": True|False|None, "refill": bool, "date": datetime|None, "msg": str}].
+    Ошибка останавливает цепочку; непроведённая невыбранная корректировка блокирует последующие.
+    """
+    log = []
+    prev_date = None
+    has_prev = False
+    simulated = False
+    stopped = False
+    skipped_num = None
+    for it in items:
+        if it["posted"]:
+            prev_date, has_prev = it["date"], True
+            continue
+        day = selected.get(it["num"])
+        if day is None:
+            if skipped_num is None:
+                skipped_num = it["num"]
+            continue
+        if stopped:
+            log.append({"num": it["num"], "ok": None, "refill": False, "date": None, "msg": "stopped"})
+            continue
+        if skipped_num is not None:
+            log.append({"num": it["num"], "ok": False, "refill": False, "date": None, "msg": "blocked by " + skipped_num})
+            stopped = True
+            continue
+        nd = new_doc_date(it["date"], day)
+        if prev_date is not None and nd <= prev_date and nd.date() == prev_date.date():
+            # тот же день, но время исходной даты нарушает порядок цепочки: ставим сразу после предыдущей
+            nd = prev_date + timedelta(seconds=1)
+            if nd.date() != prev_date.date():
+                nd = prev_date  # день закончился — ниже сработает проверка порядка
+        if prev_date is not None and nd <= prev_date:
+            log.append({"num": it["num"], "ok": False, "refill": False, "date": nd, "msg": "date order"})
+            stopped = True
+            continue
+        refill = has_prev and not simulated
+        log.append({"num": it["num"], "ok": None if dry_run else True, "refill": refill, "date": nd, "msg": ""})
+        if dry_run:
+            simulated = True
+        prev_date, has_prev = nd, True
+    return log

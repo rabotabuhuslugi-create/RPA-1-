@@ -81,3 +81,73 @@ def test_return_line_used_once():
     rr, cr = reconcile(ret, corr)
     c = by_doc(cr)
     assert sorted(x.status for x in c.values()) == ["full", "none"]
+
+
+# ── этап 2: цепочки корректировок ──
+from datetime import datetime as _dt
+from rpa1c.sverka import plan_chain, new_doc_date
+
+
+def _k(num, d, posted=False):
+    return {"num": num, "date": d, "posted": posted}
+
+
+def test_new_date_keeps_time_of_day():
+    assert new_doc_date(_dt(2026, 6, 10, 11, 30), _dt(2026, 10, 23)) == _dt(2026, 10, 23, 11, 30)
+    same = _dt(2026, 10, 23, 9, 5)
+    assert new_doc_date(same, _dt(2026, 10, 23)) is same
+
+
+def test_chain_posts_in_order_and_refills_all_but_first():
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9)), _k("К3", _dt(2026, 6, 12, 9))]
+    sel = {n: _dt(2026, 10, 23) for n in ("К1", "К2", "К3")}
+    # все три на одну дату: порядок сохраняется только если время суток возрастает — здесь нет (9:00 везде)
+    log = plan_chain(items, sel)
+    # одна дата и одинаковое время суток: каждая следующая ставится на секунду позже предыдущей
+    assert [r["ok"] for r in log] == [True, True, True]
+    assert [r["date"] for r in log] == [_dt(2026, 10, 23, 9), _dt(2026, 10, 23, 9, 0, 1), _dt(2026, 10, 23, 9, 0, 2)]
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 10)), _k("К3", _dt(2026, 6, 12, 11))]
+    log = plan_chain(items, sel)
+    assert [r["ok"] for r in log] == [True, True, True]
+    assert [r["refill"] for r in log] == [False, True, True]
+
+
+def test_first_correction_refilled_when_earlier_is_already_posted():
+    items = [_k("К1", _dt(2026, 6, 10, 9), True), _k("К2", _dt(2026, 6, 11, 9))]
+    log = plan_chain(items, {"К2": _dt(2026, 6, 11)})
+    assert log[0]["refill"] is True and log[0]["ok"] is True
+
+
+def test_unselected_unposted_blocks_following():
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9)), _k("К3", _dt(2026, 6, 12, 9))]
+    log = plan_chain(items, {"К2": _dt(2026, 6, 11), "К3": _dt(2026, 6, 12)})
+    assert [r["ok"] for r in log] == [False, None]
+    assert "К1" in log[0]["msg"]
+
+
+def test_date_must_be_after_previous_posted():
+    items = [_k("К1", _dt(2026, 10, 1, 9), True), _k("К2", _dt(2026, 6, 11, 9))]
+    log = plan_chain(items, {"К2": _dt(2026, 6, 11)})
+    assert log[0]["ok"] is False
+
+
+def test_dry_run_does_not_refill_after_virtual_posting():
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9))]
+    sel = {"К1": _dt(2026, 6, 10), "К2": _dt(2026, 6, 11)}
+    log = plan_chain(items, sel, dry_run=True)
+    assert [r["refill"] for r in log] == [False, False]
+    assert [r["ok"] for r in log] == [None, None]
+
+
+def test_same_day_time_order_is_fixed_by_bumping_seconds():
+    # К1 в 15:00, К2 в 09:00 следующего дня; обе переносим на один день -> К2 после К1
+    items = [_k("К1", _dt(2026, 6, 10, 15)), _k("К2", _dt(2026, 6, 11, 9))]
+    sel = {"К1": _dt(2026, 10, 23), "К2": _dt(2026, 10, 23)}
+    log = plan_chain(items, sel)
+    assert log[1]["ok"] is True and log[1]["date"] == _dt(2026, 10, 23, 15, 0, 1)
+
+
+def test_day_before_previous_still_error():
+    items = [_k("К1", _dt(2026, 10, 24, 9), True), _k("К2", _dt(2026, 6, 11, 9))]
+    log = plan_chain(items, {"К2": _dt(2026, 10, 23)})
+    assert log[0]["ok"] is False

@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:mxl="http://v8.1c.ru/8.2/data/spreadsheet" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.11">
-	<ExternalDataProcessor uuid="8fa394bc-3430-469f-a341-dea65a1b8dc0">
+	<ExternalDataProcessor uuid="f13704f8-4f0a-4103-9882-b155491c77d5">
 		<InternalInfo>
-			<xr:ContainedObject><xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId><xr:ObjectId>806b8689-158f-4c36-9e14-d7c8a5c33ab0</xr:ObjectId></xr:ContainedObject>
-			<xr:GeneratedType name="ExternalDataProcessorObject.СверкаВозвратовПоставщику" category="Object"><xr:TypeId>d8ae2d9a-3811-48f7-a2cf-d089b00d3a38</xr:TypeId><xr:ValueId>018a87a7-4e1f-4f65-8048-875c3683a891</xr:ValueId></xr:GeneratedType>
+			<xr:ContainedObject><xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId><xr:ObjectId>2e8f90ef-1d66-4b58-a289-c9af60a8dc6a</xr:ObjectId></xr:ContainedObject>
+			<xr:GeneratedType name="ExternalDataProcessorObject.СверкаВозвратовПоставщику" category="Object"><xr:TypeId>5e85ed79-2533-4eae-bb46-6f77b62003f2</xr:TypeId><xr:ValueId>91a0ed00-8511-4c8a-9736-04f23aaf5ba5</xr:ValueId></xr:GeneratedType>
 		</InternalInfo>
 		<Properties>
 			<Name>СверкаВозвратовПоставщику</Name>
