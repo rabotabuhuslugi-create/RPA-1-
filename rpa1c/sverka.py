@@ -190,7 +190,7 @@ def new_doc_date(current: datetime, posting_day: datetime) -> datetime:
     return datetime.combine(posting_day.date(), time()) + (current - datetime.combine(current.date(), time()))
 
 
-def plan_chain(items, selected, dry_run=False):
+def plan_chain(items, selected, dry_run=False, include_previous=False, default_day=None):
     """items — корректировки одного поступления по порядку даты/времени:
     {"num", "date": datetime, "posted": bool}; selected — {num: datetime дня проведения}.
 
@@ -203,15 +203,23 @@ def plan_chain(items, selected, dry_run=False):
     simulated = False
     stopped = False
     skipped_num = None
-    for it in items:
+    last_sel = -1
+    for i, it in enumerate(items):
+        if not it["posted"] and selected.get(it["num"]) is not None:
+            last_sel = i
+    for i, it in enumerate(items):
         if it["posted"]:
             prev_date, has_prev = it["date"], True
             continue
         day = selected.get(it["num"])
+        added = False
         if day is None:
-            if skipped_num is None:
-                skipped_num = it["num"]
-            continue
+            if include_previous and i < last_sel and not stopped:
+                day, added = default_day, True
+            else:
+                if skipped_num is None:
+                    skipped_num = it["num"]
+                continue
         if stopped:
             log.append({"num": it["num"], "ok": None, "refill": False, "date": None, "msg": "stopped"})
             continue
@@ -230,7 +238,8 @@ def plan_chain(items, selected, dry_run=False):
             stopped = True
             continue
         refill = has_prev and not simulated
-        log.append({"num": it["num"], "ok": None if dry_run else True, "refill": refill, "date": nd, "msg": ""})
+        log.append({"num": it["num"], "ok": None if dry_run else True, "refill": refill, "date": nd,
+                    "msg": "added" if added else ""})
         if dry_run:
             simulated = True
         prev_date, has_prev = nd, True

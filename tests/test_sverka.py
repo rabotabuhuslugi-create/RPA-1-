@@ -151,3 +151,20 @@ def test_day_before_previous_still_error():
     items = [_k("К1", _dt(2026, 10, 24, 9), True), _k("К2", _dt(2026, 6, 11, 9))]
     log = plan_chain(items, {"К2": _dt(2026, 10, 23)})
     assert log[0]["ok"] is False
+
+
+def test_include_previous_adds_unselected_earlier_corrections():
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9)), _k("К3", _dt(2026, 6, 12, 9))]
+    sel = {"К3": _dt(2026, 10, 23)}
+    log = plan_chain(items, sel, include_previous=True, default_day=_dt(2026, 10, 23))
+    assert [r["num"] for r in log] == ["К1", "К2", "К3"]
+    assert [r["ok"] for r in log] == [True, True, True]
+    assert [r["msg"] for r in log] == ["added", "added", ""]
+    assert [r["refill"] for r in log] == [False, True, True]
+    assert log[0]["date"] < log[1]["date"] < log[2]["date"]
+
+
+def test_include_previous_does_not_add_later_unselected():
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9))]
+    log = plan_chain(items, {"К1": _dt(2026, 10, 23)}, include_previous=True, default_day=_dt(2026, 10, 23))
+    assert [r["num"] for r in log] == ["К1"]
