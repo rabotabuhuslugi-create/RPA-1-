@@ -168,3 +168,26 @@ def test_include_previous_does_not_add_later_unselected():
     items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9))]
     log = plan_chain(items, {"К1": _dt(2026, 10, 23)}, include_previous=True, default_day=_dt(2026, 10, 23))
     assert [r["num"] for r in log] == ["К1"]
+
+
+# ── совместимость по поступлению ──
+def test_correction_of_later_purchase_is_not_matched_to_earlier_return():
+    # возврат 2025 года и корректировка к поступлению 2026 года не могут быть парой
+    ret = [dict(L("В1", "мол|с1|п", 1), date=_dt(2025, 6, 12))]
+    corr = [dict(L("К1", "мол|с1|п", 1), base="ПТУ-2026", base_date=_dt(2026, 6, 12))]
+    rr, cr = reconcile(ret, corr)
+    assert rr[0].status == "none" and cr == []
+
+
+def test_purchase_in_return_must_equal_correction_base():
+    ret = [dict(L("В1", "мол|с1|п", 1), date=_dt(2026, 7, 1), purchase="ПТУ-А")]
+    corr = [dict(L("К1", "мол|с1|п", 1), base="ПТУ-Б", base_date=_dt(2026, 6, 1))]
+    assert reconcile(ret, corr)[0][0].status == "none"
+    corr = [dict(L("К1", "мол|с1|п", 1), base="ПТУ-А", base_date=_dt(2026, 6, 1))]
+    assert reconcile(ret, corr)[0][0].status == "full"
+
+
+def test_earlier_purchase_without_explicit_link_is_matched():
+    ret = [dict(L("В1", "мол|с1|п", 1), date=_dt(2026, 7, 1))]
+    corr = [dict(L("К1", "мол|с1|п", 1), base="ПТУ", base_date=_dt(2026, 6, 1))]
+    assert reconcile(ret, corr)[0][0].status == "full"

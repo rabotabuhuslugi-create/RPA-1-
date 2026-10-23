@@ -48,6 +48,19 @@ def subset_sum(pool, target, tol, max_len):
     return ctx["found"]
 
 
+def compatible(ret, corr):
+    """Совместимость строки возврата и строки корректировки по поступлению.
+
+    Если в возврате указано поступление ("purchase"), оно должно совпасть с основанием корректировки ("base").
+    Иначе поступление корректировки ("base_date") не может быть позже возврата ("date")."""
+    if ret.get("purchase"):
+        return ret["purchase"] == corr.get("base")
+    bd, rd = corr.get("base_date"), ret.get("date")
+    if bd is not None and rd is not None:
+        return bd <= rd
+    return True
+
+
 def _find(avail, line, tol, max_combo):
     if not avail:
         return None
@@ -92,7 +105,7 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
         lines = doc_map[dk]
         docs.append({
             "doc": dk, "num": lines[0]["num"], "date": lines[0]["date"], "lines": lines,
-            "relevant": any(l["key"] in rb for l in lines), "resolved": False,
+            "relevant": any(compatible(r, l) for l in lines for r in rb.get(l["key"], [])), "resolved": False,
         })
 
     used = set()
@@ -112,7 +125,8 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
         tentative_used, tentative = set(), []
         all_ok = True
         for line in d["lines"]:
-            avail = [r for r in rb.get(line["key"], []) if r["idx"] not in used and r["idx"] not in tentative_used]
+            avail = [r for r in rb.get(line["key"], [])
+                     if r["idx"] not in used and r["idx"] not in tentative_used and compatible(r, line)]
             found = _find(avail, line, tol, max_combo)
             if found:
                 tentative_used.update(r["idx"] for r in found)
@@ -132,7 +146,7 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
         for line in d["lines"]:
             if line["idx"] in line_match:
                 continue
-            avail = [r for r in rb.get(line["key"], []) if r["idx"] not in used]
+            avail = [r for r in rb.get(line["key"], []) if r["idx"] not in used and compatible(r, line)]
             found = _find(avail, line, tol, max_combo)
             if found:
                 commit(line, found)
