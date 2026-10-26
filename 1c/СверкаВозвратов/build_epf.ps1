@@ -16,22 +16,33 @@ foreach ($root in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
 if (-not $v8) { $v8 = (Read-Host '1cv8.exe not found. Enter full path to 1cv8.exe').Trim('"') }
 Write-Host "Using: $v8"
 
-Write-Host 'Build on a COPY of your database.'
-Write-Host '  1 - file base'
-Write-Host '  2 - server base'
-$kind = Read-Host 'Enter 1 or 2'
-if ($kind -eq '1') {
-    $dir = (Read-Host 'Full path to the base folder').Trim().Trim('"')
-    $conn = "File=$dir;"
-} elseif ($kind -eq '2') {
-    $srv = (Read-Host 'Server name').Trim()
-    $ref = (Read-Host 'Base name on the server').Trim()
-    $conn = "Srvr=$srv;Ref=$ref;"
-} else { throw 'Nothing selected.' }
+# Saved connection (build_settings.ps1 next to this script). Delete that file to be asked every time.
+$settings = Join-Path $here 'build_settings.ps1'
+$Server = ''; $Base = ''; $User = ''; $Password = ''
+if (Test-Path $settings) { . $settings }
 
-$usr = (Read-Host '1C user name (as in the login dialog), Enter if none').Trim()
-$sec = Read-Host '1C password, Enter if none' -AsSecureString
-$pwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+if ($Server -and $Base) {
+    $conn = "Srvr=$Server;Ref=$Base;"
+    $usr = $User
+    $pwd = $Password
+    Write-Host "Saved connection: server $Server, base $Base"
+} else {
+    Write-Host 'Build on a COPY of your database.'
+    Write-Host '  1 - file base'
+    Write-Host '  2 - server base'
+    $kind = Read-Host 'Enter 1 or 2'
+    if ($kind -eq '1') {
+        $dir = (Read-Host 'Full path to the base folder').Trim().Trim('"')
+        $conn = "File=$dir;"
+    } elseif ($kind -eq '2') {
+        $srv = (Read-Host 'Server name').Trim()
+        $ref = (Read-Host 'Base name on the server').Trim()
+        $conn = "Srvr=$srv;Ref=$ref;"
+    } else { throw 'Nothing selected.' }
+    $usr = (Read-Host '1C user name (as in the login dialog), Enter if none').Trim()
+    $sec = Read-Host '1C password, Enter if none' -AsSecureString
+    $pwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+}
 
 $xml = Get-ChildItem (Join-Path $here 'dump') -Filter *.xml | Select-Object -First 1
 $out = Join-Path $here 'SverkaVozvratov.epf'
