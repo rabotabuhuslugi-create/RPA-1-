@@ -93,8 +93,8 @@ def _find(avail, line, tol, max_combo):
 
 
 
-LIMIT_OPTIONS = 12       # вариантов раскладки одной строки корректировки
-LIMIT_COMBO_STEPS = 20000
+LIMIT_OPTIONS = 8        # вариантов раскладки одной строки корректировки
+LIMIT_COMBO_STEPS = 3000
 
 
 def _all_combos(pool, target, tol, max_len):
@@ -163,26 +163,63 @@ def _components(docs, rb, max_months, early_days):
     return list(groups.values())
 
 
-def solve_component(docs, rb, tol, max_combo, max_months=3, early_days=30, step_limit=300000):
-    """Точный подбор: какие документы корректировки закрыть ЦЕЛИКОМ и какими строками возврата, чтобы
-    закрыть как можно больше строк возврата (при равенстве — больше документов, затем раньше по порядку).
+def greedy_component(docs, rb, tol, max_combo, max_months=3, early_days=30):
+    """Быстрое жадное решение: документы по порядку, документ закрываем только если ВСЕ его строки нашли пару.
+    Возвращает (assign, score) — стартовый вариант для точного подбора."""
+    used, assign, score = set(), {}, 0
+    for i, d in enumerate(docs):
+        tentative, pairs, all_ok, nlines = set(), [], True, 0
+        for line in d["lines"]:
+            avail = [r for r in rb.get(line["key"], [])
+                     if r["idx"] not in used and r["idx"] not in tentative and compatible(r, line, max_months, early_days)]
+            found = _find(avail, line, tol, max_combo)
+            if not found:
+                all_ok = False
+                break
+            tentative.update(r["idx"] for r in found)
+            pairs.append((line, found))
+            nlines += len(found)
+        if all_ok:
+            used |= tentative
+            assign[i] = pairs
+            score += nlines * 1000 + 1
+    return assign, score
+
+
+def solve_component(docs, rb, tol, max_combo, max_months=3, early_days=30, time_limit=None, step_limit=300000):
+    """Подбор: какие документы корректировки закрыть ЦЕЛИКОМ и какими строками возврата, чтобы закрыть как можно
+    больше строк возврата (при равенстве — больше документов, затем раньше по порядку).
+    Стартует с жадного решения и улучшает его точным перебором, пока не вышло время (time_limit, сек) или шаги.
     Возвращает {индекс документа: [(строка корректировки, [строки возврата])]}."""
+    import time as _time
+    deadline = None if time_limit is None else _time.monotonic() + time_limit
     n = len(docs)
     potential = [0] * (n + 1)
+    acc = set()
     for i in range(n - 1, -1, -1):
-        cand = set()
         for line in docs[i]["lines"]:
             for r in rb.get(line["key"], []):
                 if compatible(r, line, max_months, early_days):
-                    cand.add(r["idx"])
-        potential[i] = potential[i + 1] + len(cand) * 1000 + 1
-    best = {"score": 0, "assign": {}}
+                    acc.add(r["idx"])
+        potential[i] = len(acc) * 1000 + (n - i)
+    g_assign, g_score = greedy_component(docs, rb, tol, max_combo, max_months, early_days)
+    best = {"score": g_score, "assign": g_assign}
+    if g_score >= potential[0]:
+        return best["assign"]
     steps = [0]
+    stop = [False]
     assign = {}
     used = set()
 
+    def out_of_budget():
+        if stop[0]:
+            return True
+        if steps[0] > step_limit or (deadline is not None and steps[0] % 20 == 0 and _time.monotonic() > deadline):
+            stop[0] = True
+        return stop[0]
+
     def doc_search(i, score):
-        if steps[0] > step_limit:
+        if stop[0]:
             return
         if i >= n:
             if score > best["score"]:
@@ -191,13 +228,13 @@ def solve_component(docs, rb, tol, max_combo, max_months=3, early_days=30, step_
         if score + potential[i] <= best["score"]:
             return
         lines_search(i, 0, score, [], 0)
-        if steps[0] <= step_limit:
+        if not stop[0]:
             doc_search(i + 1, score)
 
     def lines_search(i, k, score, pairs, nlines):
-        if steps[0] > step_limit:
-            return
         steps[0] += 1
+        if out_of_budget():
+            return
         d = docs[i]
         if k >= len(d["lines"]):
             assign[i] = list(pairs)
@@ -206,7 +243,7 @@ def solve_component(docs, rb, tol, max_combo, max_months=3, early_days=30, step_
             return
         line = d["lines"][k]
         for opt in _line_options(rb, line, used, tol, max_combo, max_months, early_days):
-            if steps[0] > step_limit:
+            if stop[0]:
                 break
             for r in opt:
                 used.add(r["idx"])
@@ -232,7 +269,7 @@ class DocResult:
     corr_not_ready: list = field(default_factory=list)
 
 
-def reconcile(ret_all, corr_all, tol=0.01, max_combo=6, max_months=3, early_days=30):
+def reconcile(ret_all, corr_all, tol=0.01, max_combo=6, max_months=3, early_days=30, time_limit=20):
     for i, r in enumerate(ret_all):
         r["idx"] = i
     for i, c in enumerate(corr_all):
@@ -272,7 +309,7 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6, max_months=3, early_days
     # Раунд 1: точный подбор по компонентам — закрыть ЦЕЛИКОМ те документы корректировки, которые дают
     # максимум закрытых строк возврата (а не «первые подошедшие»)
     for comp in _components(candidates, rb, max_months, early_days):
-        solution = solve_component(comp, rb, tol, max_combo, max_months, early_days)
+        solution = solve_component(comp, rb, tol, max_combo, max_months, early_days, time_limit)
         for i, pairs in solution.items():
             for line, found in pairs:
                 commit(line, found)

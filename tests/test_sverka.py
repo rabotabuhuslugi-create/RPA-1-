@@ -249,3 +249,17 @@ def test_purchase_must_be_before_return():
     ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10))]
     corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 6, 20), base_date=_dt(2026, 6, 1))]
     assert reconcile(ret, corr)[0][0].status == "full"
+
+
+def test_large_group_finishes_within_time_budget():
+    import random, time
+    random.seed(1)
+    ret = [L("R%d" % (i // 3), "a|s|p", random.choice([1, 2, 3, 5])) for i in range(60)]
+    corr = []
+    for k in range(40):
+        for _ in range(random.choice([1, 2, 3])):
+            corr.append(L("K%d" % k, "a|s|p", random.choice([1, 2, 3, 5, 6, 8])))
+    t0 = time.time()
+    rr, cr = reconcile(ret, corr, time_limit=0.5)
+    assert time.time() - t0 < 5          # не зависает: время ограничено, результат не хуже жадного
+    assert any(r.status == "full" for r in rr)
