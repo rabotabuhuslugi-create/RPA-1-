@@ -380,12 +380,15 @@ def new_doc_date(current: datetime, posting_day: datetime) -> datetime:
     return datetime.combine(posting_day.date(), time()) + (current - datetime.combine(current.date(), time()))
 
 
-def plan_chain(items, selected, dry_run=False, include_previous=False, default_day=None):
+def plan_chain(items, selected, dry_run=False, allowed=None):
     """items — корректировки одного поступления по порядку даты/времени:
     {"num", "date": datetime, "posted": bool}; selected — {num: datetime дня проведения}.
 
     Возвращает записи [{"num", "ok": True|False|None, "refill": bool, "date": datetime|None, "msg": str}].
-    Ошибка останавливает цепочку; непроведённая невыбранная корректировка блокирует последующие.
+    allowed — {num: день проведения} непроведённых корректировок, сопоставленных с возвратами: их можно провести как
+    «предыдущие». Первая непроведённая корректировка, которой нет ни в selected, ни в allowed (не сопоставилась),
+    останавливает цепочку: всё до неё проводится, всё после — нет.
+    Ошибка останавливает цепочку.
     """
     log = []
     prev_date = None
@@ -404,8 +407,9 @@ def plan_chain(items, selected, dry_run=False, include_previous=False, default_d
         day = selected.get(it["num"])
         added = False
         if day is None:
-            if include_previous and i < last_sel and not stopped:
-                day, added = default_day, True
+            if allowed and it["num"] in allowed and i < last_sel and not stopped:
+                # не выбрана, но сопоставлена с возвратами и стоит раньше выбранной — проводим тоже
+                day, added = allowed[it["num"]], True
             else:
                 if skipped_num is None:
                     skipped_num = it["num"]

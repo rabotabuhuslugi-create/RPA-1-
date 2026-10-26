@@ -173,10 +173,11 @@ def test_day_before_previous_still_error():
     assert log[0]["ok"] is False
 
 
-def test_include_previous_adds_unselected_earlier_corrections():
+def test_matched_previous_corrections_are_posted_with_chain():
     items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9)), _k("К3", _dt(2026, 6, 12, 9))]
     sel = {"К3": _dt(2026, 10, 23)}
-    log = plan_chain(items, sel, include_previous=True, default_day=_dt(2026, 10, 23))
+    allowed = {"К1": _dt(2026, 10, 23), "К2": _dt(2026, 10, 23)}   # К1 и К2 сопоставлены с возвратами
+    log = plan_chain(items, sel, allowed=allowed)
     assert [r["num"] for r in log] == ["К1", "К2", "К3"]
     assert [r["ok"] for r in log] == [True, True, True]
     assert [r["msg"] for r in log] == ["added", "added", ""]
@@ -184,10 +185,21 @@ def test_include_previous_adds_unselected_earlier_corrections():
     assert log[0]["date"] < log[1]["date"] < log[2]["date"]
 
 
-def test_include_previous_does_not_add_later_unselected():
+def test_chain_stops_at_first_unmatched_previous_correction():
+    # К1 сопоставлена и проводится, К2 не сопоставилась — цепочка останавливается на ней, К3 не проводится
+    items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9)), _k("К3", _dt(2026, 6, 12, 9))]
+    sel = {"К3": _dt(2026, 10, 23)}
+    log = plan_chain(items, sel, allowed={"К1": _dt(2026, 10, 23)})
+    assert [r["num"] for r in log] == ["К1", "К3"]
+    assert log[0]["ok"] is True
+    assert log[1]["ok"] is False and "К2" in log[1]["msg"]
+
+
+def test_matched_corrections_before_the_blocker_are_posted():
     items = [_k("К1", _dt(2026, 6, 10, 9)), _k("К2", _dt(2026, 6, 11, 9))]
-    log = plan_chain(items, {"К1": _dt(2026, 10, 23)}, include_previous=True, default_day=_dt(2026, 10, 23))
-    assert [r["num"] for r in log] == ["К1"]
+    sel = {"К1": _dt(2026, 10, 23)}
+    log = plan_chain(items, sel, allowed={})
+    assert [r["num"] for r in log] == ["К1"] and log[0]["ok"] is True   # К2 вне выбора — после последней выбранной, не трогаем
 
 
 # ── совместимость по поступлению ──
