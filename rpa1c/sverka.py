@@ -56,24 +56,29 @@ def _add_months(d, months):
     return d.replace(year=y, month=m, day=min(d.day, calendar.monthrange(y, m)[1]))
 
 
-def compatible(ret, corr, max_months=3):
+def compatible(ret, corr, max_months=3, early_days=30):
     """Можно ли сопоставлять строку возврата и строку корректировки.
 
-    1. Срок: дата корректировки поставщика ("corr_date") не раньше возврата ("date") и не позже max_months месяцев.
+    1. Срок: дата корректировки поставщика ("corr_date") не позже max_months месяцев после возврата ("date") и не раньше
+       возврата более чем на early_days дней (возврат могут провести позже прихода корректировки);
+       если в возврате явно указано то же поступление ("purchase" == "base"), нижняя граница не применяется.
     2. Поступление корректировки ("base_date") не позже возврата.
     3. Если в возврате указано поступление ("purchase") — оно должно совпасть с основанием корректировки ("base").
     Отсутствующие поля не ограничивают."""
+    explicit = bool(ret.get("purchase")) and ret["purchase"] == corr.get("base")
     rd, cd = ret.get("date"), corr.get("corr_date")
     if rd is not None and cd is not None:
         r0 = rd.replace(hour=0, minute=0, second=0, microsecond=0)
         c0 = cd.replace(hour=0, minute=0, second=0, microsecond=0)
-        if c0 < r0 or c0 > _add_months(r0, max_months):
+        if c0 > _add_months(r0, max_months):
+            return False
+        if not explicit and c0 < r0 - timedelta(days=early_days):
             return False
     bd = corr.get("base_date")
     if bd is not None and rd is not None and bd > rd:
         return False
     if ret.get("purchase"):
-        return ret["purchase"] == corr.get("base")
+        return explicit
     return True
 
 

@@ -194,10 +194,23 @@ def test_earlier_purchase_without_explicit_link_is_matched():
 
 
 # ── срок корректировки: не раньше возврата, не позже 3 месяцев ──
-def test_correction_before_return_is_not_matched():
+def test_correction_slightly_before_return_is_matched_return_posted_late():
+    # возврат провели позже прихода корректировки: корректировка на 5 дней раньше возврата — допустимо
     ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10))]
-    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 6, 9))]
+    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 6, 5))]
+    assert reconcile(ret, corr)[0][0].status == "full"
+
+
+def test_correction_much_earlier_than_return_is_not_matched():
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10))]
+    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 5, 1))]   # на 40 дней раньше, допуск 30
     assert reconcile(ret, corr)[0][0].status == "none"
+
+
+def test_explicit_purchase_link_waives_lower_date_bound():
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10), purchase="ПТУ-А")]
+    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 4, 1), base="ПТУ-А", base_date=_dt(2026, 3, 1))]
+    assert reconcile(ret, corr)[0][0].status == "full"
 
 
 def test_correction_within_three_months_is_matched_and_after_is_not():
