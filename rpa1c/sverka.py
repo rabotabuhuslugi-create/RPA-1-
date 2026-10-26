@@ -92,6 +92,134 @@ def _find(avail, line, tol, max_combo):
     return combo if combo else None
 
 
+
+LIMIT_OPTIONS = 12       # вариантов раскладки одной строки корректировки
+LIMIT_COMBO_STEPS = 20000
+
+
+def _all_combos(pool, target, tol, max_len):
+    """Все комбинации из 2+ строк пула с суммой target (±tol), не более LIMIT_OPTIONS."""
+    srt = sorted(pool, key=lambda r: (-r["qty"], r["idx"]))
+    n = len(srt)
+    suffix = [0.0] * (n + 1)
+    for i in range(n - 1, -1, -1):
+        suffix[i] = suffix[i + 1] + srt[i]["qty"]
+    out, steps = [], [0]
+
+    def dfs(i, remaining, chosen):
+        if len(out) >= LIMIT_OPTIONS or steps[0] > LIMIT_COMBO_STEPS:
+            return
+        steps[0] += 1
+        if len(chosen) > max_len:
+            return
+        if abs(remaining) <= tol and len(chosen) >= 2:
+            out.append(list(chosen))
+            return
+        if i >= n or remaining < -tol or remaining - tol > suffix[i]:
+            return
+        chosen.append(srt[i])
+        dfs(i + 1, remaining - srt[i]["qty"], chosen)
+        chosen.pop()
+        dfs(i + 1, remaining, chosen)
+
+    dfs(0, target, [])
+    return out
+
+
+def _line_options(rb, line, used, tol, max_combo, max_months, early_days):
+    """Варианты закрыть строку корректировки свободными строками возврата: сначала одна строка, затем комбинации."""
+    free = [r for r in rb.get(line["key"], [])
+            if r["idx"] not in used and compatible(r, line, max_months, early_days)]
+    opts = [[r] for r in free if abs(r["qty"] - line["qty"]) <= tol][:LIMIT_OPTIONS]
+    if len(opts) < LIMIT_OPTIONS:
+        opts += _all_combos(free, line["qty"], tol, max_combo)[:LIMIT_OPTIONS - len(opts)]
+    return opts
+
+
+def _components(docs, rb, max_months, early_days):
+    """Корректировки, делящие хотя бы одну возможную строку возврата, попадают в одну компоненту."""
+    parent = list(range(len(docs)))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    owner = {}
+    for i, d in enumerate(docs):
+        for line in d["lines"]:
+            for r in rb.get(line["key"], []):
+                if compatible(r, line, max_months, early_days):
+                    if r["idx"] in owner:
+                        a, b = find(i), find(owner[r["idx"]])
+                        if a != b:
+                            parent[max(a, b)] = min(a, b)
+                    else:
+                        owner[r["idx"]] = i
+    groups = {}
+    for i in range(len(docs)):
+        groups.setdefault(find(i), []).append(docs[i])
+    return list(groups.values())
+
+
+def solve_component(docs, rb, tol, max_combo, max_months=3, early_days=30, step_limit=300000):
+    """Точный подбор: какие документы корректировки закрыть ЦЕЛИКОМ и какими строками возврата, чтобы
+    закрыть как можно больше строк возврата (при равенстве — больше документов, затем раньше по порядку).
+    Возвращает {индекс документа: [(строка корректировки, [строки возврата])]}."""
+    n = len(docs)
+    potential = [0] * (n + 1)
+    for i in range(n - 1, -1, -1):
+        cand = set()
+        for line in docs[i]["lines"]:
+            for r in rb.get(line["key"], []):
+                if compatible(r, line, max_months, early_days):
+                    cand.add(r["idx"])
+        potential[i] = potential[i + 1] + len(cand) * 1000 + 1
+    best = {"score": 0, "assign": {}}
+    steps = [0]
+    assign = {}
+    used = set()
+
+    def doc_search(i, score):
+        if steps[0] > step_limit:
+            return
+        if i >= n:
+            if score > best["score"]:
+                best["score"], best["assign"] = score, dict(assign)
+            return
+        if score + potential[i] <= best["score"]:
+            return
+        lines_search(i, 0, score, [], 0)
+        if steps[0] <= step_limit:
+            doc_search(i + 1, score)
+
+    def lines_search(i, k, score, pairs, nlines):
+        if steps[0] > step_limit:
+            return
+        steps[0] += 1
+        d = docs[i]
+        if k >= len(d["lines"]):
+            assign[i] = list(pairs)
+            doc_search(i + 1, score + nlines * 1000 + 1)
+            assign.pop(i, None)
+            return
+        line = d["lines"][k]
+        for opt in _line_options(rb, line, used, tol, max_combo, max_months, early_days):
+            if steps[0] > step_limit:
+                break
+            for r in opt:
+                used.add(r["idx"])
+            pairs.append((line, opt))
+            lines_search(i, k + 1, score, pairs, nlines + len(opt))
+            pairs.pop()
+            for r in opt:
+                used.discard(r["idx"])
+
+    doc_search(0, 0)
+    return best["assign"]
+
+
 @dataclass
 class DocResult:
     doc: str
@@ -104,7 +232,7 @@ class DocResult:
     corr_not_ready: list = field(default_factory=list)
 
 
-def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
+def reconcile(ret_all, corr_all, tol=0.01, max_combo=6, max_months=3, early_days=30):
     for i, r in enumerate(ret_all):
         r["idx"] = i
     for i, c in enumerate(corr_all):
@@ -126,7 +254,7 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
         lines = doc_map[dk]
         docs.append({
             "doc": dk, "num": lines[0]["num"], "date": lines[0]["date"], "lines": lines,
-            "relevant": any(compatible(r, l) for l in lines for r in rb.get(l["key"], [])), "resolved": False,
+            "relevant": any(compatible(r, l, max_months, early_days) for l in lines for r in rb.get(l["key"], [])), "resolved": False,
         })
 
     used = set()
@@ -141,24 +269,14 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
 
     candidates = sorted((d for d in docs if d["relevant"]), key=lambda d: (len(d["lines"]), d["doc"]))
 
-    # Раунд 1: закрываем документы корректировки целиком, от коротких к длинным
-    for d in candidates:
-        tentative_used, tentative = set(), []
-        all_ok = True
-        for line in d["lines"]:
-            avail = [r for r in rb.get(line["key"], [])
-                     if r["idx"] not in used and r["idx"] not in tentative_used and compatible(r, line)]
-            found = _find(avail, line, tol, max_combo)
-            if found:
-                tentative_used.update(r["idx"] for r in found)
-                tentative.append((line, found))
-            else:
-                all_ok = False
-                break
-        if all_ok and d["lines"]:
-            for line, found in tentative:
+    # Раунд 1: точный подбор по компонентам — закрыть ЦЕЛИКОМ те документы корректировки, которые дают
+    # максимум закрытых строк возврата (а не «первые подошедшие»)
+    for comp in _components(candidates, rb, max_months, early_days):
+        solution = solve_component(comp, rb, tol, max_combo, max_months, early_days)
+        for i, pairs in solution.items():
+            for line, found in pairs:
                 commit(line, found)
-            d["resolved"] = True
+            comp[i]["resolved"] = True
 
     # Раунд 2: частичные совпадения для остальных
     for d in candidates:
@@ -167,7 +285,7 @@ def reconcile(ret_all, corr_all, tol=0.01, max_combo=6):
         for line in d["lines"]:
             if line["idx"] in line_match:
                 continue
-            avail = [r for r in rb.get(line["key"], []) if r["idx"] not in used and compatible(r, line)]
+            avail = [r for r in rb.get(line["key"], []) if r["idx"] not in used and compatible(r, line, max_months, early_days)]
             found = _find(avail, line, tol, max_combo)
             if found:
                 commit(line, found)

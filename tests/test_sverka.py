@@ -49,15 +49,35 @@ def test_return_not_deletable_while_correction_not_closed_fully():
     assert rr[0].status == "partial" and rr[0].corr_not_ready == ["К1"]
 
 
-def test_small_documents_first_dont_lose_returns():
-    # К_малая (1 строка) должна получить возврат до крупной К_большая
+def test_optimizer_prefers_correction_that_closes_more_return_lines():
+    # единственную строку возврата «а» могут закрыть и малая (1 строка), и большая корректировка (2 строки);
+    # выгоднее большая: закрываются обе позиции возврата, а не одна
     ret = [L("В1", "а|с|п", 5), L("В2", "б|с|п", 7)]
     corr = [L("К_большая", "а|с|п", 5), L("К_большая", "б|с|п", 7),
             L("К_малая", "а|с|п", 5)]
     rr, cr = reconcile(ret, corr)
     c = by_doc(cr)
-    assert c["К_малая"].status == "full"
-    assert c["К_большая"].status == "partial"
+    assert c["К_большая"].status == "full"
+    assert c["К_малая"].status == "none"
+    assert all(r.status == "full" for r in rr)
+
+
+def test_optimizer_prefers_more_closed_corrections_at_equal_coverage():
+    # возвраты 3 и 2; корректировка К1 (5) закрылась бы суммой 3+2, но К2 (3) и К3 (2) закрывают те же позиции
+    # двумя документами — закрыто больше корректировок
+    ret = [L("В1", "а|с|п", 3), L("В2", "а|с|п", 2)]
+    corr = [L("К1", "а|с|п", 5), L("К2", "а|с|п", 3), L("К3", "а|с|п", 2)]
+    rr, cr = reconcile(ret, corr)
+    c = by_doc(cr)
+    assert c["К2"].status == "full" and c["К3"].status == "full" and c["К1"].status == "none"
+
+
+def test_optimizer_covers_all_return_lines_when_possible():
+    # корректировка К1 закрывает 3 и 2 (комбинация), К2 закрывает 5 одной строкой: все три позиции возврата закрыты
+    ret = [L("В1", "а|с|п", 3), L("В2", "а|с|п", 2), L("В3", "а|с|п", 5)]
+    corr = [L("К1", "а|с|п", 5), L("К2", "а|с|п", 5)]
+    rr, cr = reconcile(ret, corr)
+    assert all(r.status == "full" for r in rr)
 
 
 def test_tolerance():
