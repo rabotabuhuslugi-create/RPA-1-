@@ -191,3 +191,28 @@ def test_earlier_purchase_without_explicit_link_is_matched():
     ret = [dict(L("В1", "мол|с1|п", 1), date=_dt(2026, 7, 1))]
     corr = [dict(L("К1", "мол|с1|п", 1), base="ПТУ", base_date=_dt(2026, 6, 1))]
     assert reconcile(ret, corr)[0][0].status == "full"
+
+
+# ── срок корректировки: не раньше возврата, не позже 3 месяцев ──
+def test_correction_before_return_is_not_matched():
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10))]
+    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 6, 9))]
+    assert reconcile(ret, corr)[0][0].status == "none"
+
+
+def test_correction_within_three_months_is_matched_and_after_is_not():
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10, 15))]
+    ok = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 9, 10, 8))]       # ровно 3 месяца (по дням)
+    late = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 9, 11))]
+    assert reconcile(ret, ok)[0][0].status == "full"
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10, 15))]
+    assert reconcile(ret, late)[0][0].status == "none"
+
+
+def test_purchase_must_be_before_return():
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10))]
+    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 6, 20), base_date=_dt(2026, 6, 12))]
+    assert reconcile(ret, corr)[0][0].status == "none"
+    ret = [dict(L("В1", "а|с|п", 1), date=_dt(2026, 6, 10))]
+    corr = [dict(L("К1", "а|с|п", 1), corr_date=_dt(2026, 6, 20), base_date=_dt(2026, 6, 1))]
+    assert reconcile(ret, corr)[0][0].status == "full"

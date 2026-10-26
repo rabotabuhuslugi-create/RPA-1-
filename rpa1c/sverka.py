@@ -48,16 +48,32 @@ def subset_sum(pool, target, tol, max_len):
     return ctx["found"]
 
 
-def compatible(ret, corr):
-    """Совместимость строки возврата и строки корректировки по поступлению.
+def _add_months(d, months):
+    import calendar
+    y, m = divmod(d.month - 1 + months, 12)
+    y += d.year
+    m += 1
+    return d.replace(year=y, month=m, day=min(d.day, calendar.monthrange(y, m)[1]))
 
-    Если в возврате указано поступление ("purchase"), оно должно совпасть с основанием корректировки ("base").
-    Иначе поступление корректировки ("base_date") не может быть позже возврата ("date")."""
+
+def compatible(ret, corr, max_months=3):
+    """Можно ли сопоставлять строку возврата и строку корректировки.
+
+    1. Срок: дата корректировки поставщика ("corr_date") не раньше возврата ("date") и не позже max_months месяцев.
+    2. Поступление корректировки ("base_date") не позже возврата.
+    3. Если в возврате указано поступление ("purchase") — оно должно совпасть с основанием корректировки ("base").
+    Отсутствующие поля не ограничивают."""
+    rd, cd = ret.get("date"), corr.get("corr_date")
+    if rd is not None and cd is not None:
+        r0 = rd.replace(hour=0, minute=0, second=0, microsecond=0)
+        c0 = cd.replace(hour=0, minute=0, second=0, microsecond=0)
+        if c0 < r0 or c0 > _add_months(r0, max_months):
+            return False
+    bd = corr.get("base_date")
+    if bd is not None and rd is not None and bd > rd:
+        return False
     if ret.get("purchase"):
         return ret["purchase"] == corr.get("base")
-    bd, rd = corr.get("base_date"), ret.get("date")
-    if bd is not None and rd is not None:
-        return bd <= rd
     return True
 
 
