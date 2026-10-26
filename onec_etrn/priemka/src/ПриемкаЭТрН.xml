@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.11">
+	<ExternalDataProcessor uuid="0618112e-7252-4957-a6ec-404461c13d81">
+		<InternalInfo>
+			<xr:ContainedObject>
+				<xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId>
+				<xr:ObjectId>1db2f367-87b1-481c-844f-d2269eea4383</xr:ObjectId>
+			</xr:ContainedObject>
+			<xr:GeneratedType name="ExternalDataProcessorObject.ПриемкаЭТрН" category="Object">
+				<xr:TypeId>db966f6c-d7ea-4177-8952-a03578f992a7</xr:TypeId>
+				<xr:ValueId>3143e7eb-310b-4656-b2a1-954059e476f4</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<Name>ПриемкаЭТрН</Name>
+			<Synonym><v8:item><v8:lang>ru</v8:lang><v8:content>Приёмка ЭТрН</v8:content></v8:item></Synonym>
+			<Comment/>
+			<DefaultForm>ExternalDataProcessor.ПриемкаЭТрН.Form.Форма</DefaultForm>
+			<AuxiliaryForm/>
+		</Properties>
+		<ChildObjects>
+			<Form>Форма</Form>
+		</ChildObjects>
+	</ExternalDataProcessor>
+</MetaDataObject>
