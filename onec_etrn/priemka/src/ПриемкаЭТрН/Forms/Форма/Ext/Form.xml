@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.11">
-<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Приёмка ЭТрН (сборка 6)</v8:content></v8:item></Title>
+<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Приёмка ЭТрН (сборка 7)</v8:content></v8:item></Title>
 <AutoCommandBar name="ФормаКоманднаяПанель" id="-1"/>
 <Events><Event name="OnCreateAtServer">ПриСозданииНаСервере</Event></Events>
 <Attributes><Attribute name="Объект" id="1"><Type><v8:Type>cfg:ExternalDataProcessorObject.ПриемкаЭТрН</v8:Type></Type><MainAttribute>true</MainAttribute></Attribute></Attributes>
