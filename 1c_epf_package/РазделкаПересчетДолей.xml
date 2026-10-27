@@ -1,15 +1,11 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
-	<ExternalDataProcessor uuid="7f026b79-ae9a-4b3e-bcbf-e3b60d1f96ea">
+	<ExternalDataProcessor uuid="6a5d75a0-0e8d-442d-a74d-bc81e3b843f8">
 		<InternalInfo>
-			<xr:ContainedObject>
-				<xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId>
-				<xr:ObjectId>be6d9efe-9c74-440d-b277-4c6965e66ffa</xr:ObjectId>
-			</xr:ContainedObject>
-			<xr:ContainedObject>
-				<xr:ClassId>fb282519-d103-4dd3-bc12-cb271d631dfc</xr:ClassId>
-				<xr:ObjectId>2c85b8d9-5e9e-4960-9eb2-7d00bd088f75</xr:ObjectId>
-			</xr:ContainedObject>
+			<xr:GeneratedType name="ExternalDataProcessorObject.РазделкаПересчетДолей" category="Object">
+				<xr:TypeId>e7455971-7b89-4484-95de-e5bf7f9d8d74</xr:TypeId>
+				<xr:ValueId>47809701-b7e9-4522-99bb-c76d2bd93b73</xr:ValueId>
+			</xr:GeneratedType>
 		</InternalInfo>
 		<Properties>
 			<Name>РазделкаПересчетДолей</Name>
