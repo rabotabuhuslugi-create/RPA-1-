@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
-	<ExternalDataProcessor uuid="53d3555e-760e-436b-8fe8-37fe00a0838c">
+	<ExternalDataProcessor uuid="6e9bab3d-a492-41bc-bc49-1cc5f1d27107">
 		<InternalInfo>
 			<xr:GeneratedType name="ExternalDataProcessorObject.РазделкаПересчетДолей" category="Object">
-				<xr:TypeId>57513ae1-adea-4f3a-b6a1-248e5dd27618</xr:TypeId>
-				<xr:ValueId>c8b146b2-916f-404e-aa80-37c6cdf1b6a5</xr:ValueId>
+				<xr:TypeId>7ba2e6f2-8ec0-4111-b654-a3580bbd1ffe</xr:TypeId>
+				<xr:ValueId>7ce09427-4383-4a1c-8560-6fabb86b4acf</xr:ValueId>
 			</xr:GeneratedType>
 		</InternalInfo>
 		<Properties>

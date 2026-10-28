@@ -31,12 +31,12 @@
 </InputField>
 	</ChildItems>
 </UsualGroup>
-<UsualGroup name="ГруппаНастройки" id="31">
+<UsualGroup name="ГруппаНастройки" id="34">
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Настройки</v8:content></v8:item></Title>
 	<Group>Horizontal</Group>
 	<Representation>None</Representation>
 	<ShowTitle>false</ShowTitle>
-	<ExtendedTooltip name="ГруппаНастройкиРасширеннаяПодсказка" id="32"/>
+	<ExtendedTooltip name="ГруппаНастройкиРасширеннаяПодсказка" id="35"/>
 	<ChildItems>
 <InputField name="ВидЦенПоУмолчанию" id="24">
 	<DataPath>ВидЦенПоУмолчанию</DataPath>
@@ -55,40 +55,47 @@
 	<CheckBoxType>Auto</CheckBoxType>
 	<ContextMenu name="ТолькоНеверныеКонтекстноеМеню" id="28"/>
 	<ExtendedTooltip name="ТолькоНеверныеРасширеннаяПодсказка" id="29"/>
+</CheckBoxField><CheckBoxField name="ПоследниеЦены" id="33">
+	<DataPath>ПоследниеЦены</DataPath>
+	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Если на дату документа цены нет — брать последнюю имеющуюся</v8:content></v8:item></Title>
+	<TitleLocation>Right</TitleLocation>
+	<CheckBoxType>Auto</CheckBoxType>
+	<ContextMenu name="ПоследниеЦеныКонтекстноеМеню" id="31"/>
+	<ExtendedTooltip name="ПоследниеЦеныРасширеннаяПодсказка" id="32"/>
 </CheckBoxField>
 	</ChildItems>
 </UsualGroup>
-<UsualGroup name="ГруппаКоманды" id="43">
+<UsualGroup name="ГруппаКоманды" id="46">
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Команды</v8:content></v8:item></Title>
 	<Group>Horizontal</Group>
 	<Representation>None</Representation>
 	<ShowTitle>false</ShowTitle>
-	<ExtendedTooltip name="ГруппаКомандыРасширеннаяПодсказка" id="44"/>
+	<ExtendedTooltip name="ГруппаКомандыРасширеннаяПодсказка" id="47"/>
 	<ChildItems>
-<Button name="Заполнить" id="33">
+<Button name="Заполнить" id="36">
 	<Type>UsualButton</Type>
 	<CommandName>Form.Command.Заполнить</CommandName>
-	<ExtendedTooltip name="ЗаполнитьРасширеннаяПодсказка" id="34"/>
-</Button><Button name="Пересчитать" id="35">
+	<ExtendedTooltip name="ЗаполнитьРасширеннаяПодсказка" id="37"/>
+</Button><Button name="Пересчитать" id="38">
 	<Type>UsualButton</Type>
 	<CommandName>Form.Command.Пересчитать</CommandName>
-	<ExtendedTooltip name="ПересчитатьРасширеннаяПодсказка" id="36"/>
-</Button><Button name="ОтметитьВсе" id="37">
+	<ExtendedTooltip name="ПересчитатьРасширеннаяПодсказка" id="39"/>
+</Button><Button name="ОтметитьВсе" id="40">
 	<Type>UsualButton</Type>
 	<CommandName>Form.Command.ОтметитьВсе</CommandName>
-	<ExtendedTooltip name="ОтметитьВсеРасширеннаяПодсказка" id="38"/>
-</Button><Button name="СнятьОтметки" id="39">
+	<ExtendedTooltip name="ОтметитьВсеРасширеннаяПодсказка" id="41"/>
+</Button><Button name="СнятьОтметки" id="42">
 	<Type>UsualButton</Type>
 	<CommandName>Form.Command.СнятьОтметки</CommandName>
-	<ExtendedTooltip name="СнятьОтметкиРасширеннаяПодсказка" id="40"/>
-</Button><Button name="ОткрытьДокумент" id="41">
+	<ExtendedTooltip name="СнятьОтметкиРасширеннаяПодсказка" id="43"/>
+</Button><Button name="ОткрытьДокумент" id="44">
 	<Type>UsualButton</Type>
 	<CommandName>Form.Command.ОткрытьДокумент</CommandName>
-	<ExtendedTooltip name="ОткрытьДокументРасширеннаяПодсказка" id="42"/>
+	<ExtendedTooltip name="ОткрытьДокументРасширеннаяПодсказка" id="45"/>
 </Button>
 	</ChildItems>
 </UsualGroup>
-<Table name="Документы" id="66">
+<Table name="Документы" id="69">
 	<Representation>List</Representation>
 	<CommandBarLocation>None</CommandBarLocation>
 	<AutoInsertNewRow>false</AutoInsertNewRow>
@@ -96,58 +103,58 @@
 	<EnableDrag>false</EnableDrag>
 	<DataPath>Документы</DataPath>
 	<RowFilter xsi:nil="true"/>
-	<ContextMenu name="ДокументыКонтекстноеМеню" id="67"/>
-	<AutoCommandBar name="ДокументыКоманднаяПанель" id="68">
+	<ContextMenu name="ДокументыКонтекстноеМеню" id="70"/>
+	<AutoCommandBar name="ДокументыКоманднаяПанель" id="71">
 		<Autofill>false</Autofill>
 	</AutoCommandBar>
-	<ExtendedTooltip name="ДокументыРасширеннаяПодсказка" id="69"/>
+	<ExtendedTooltip name="ДокументыРасширеннаяПодсказка" id="72"/>
 	<Events>
 		<Event name="Selection">ДокументыВыбор</Event>
 	</Events>
 	<ChildItems>
-<CheckBoxField name="ДокументыВыбор" id="47">
+<CheckBoxField name="ДокументыВыбор" id="50">
 	<DataPath>Документы.Выбор</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Выбор</v8:content></v8:item></Title>
 	<TitleLocation>None</TitleLocation>
 	<CheckBoxType>Auto</CheckBoxType>
-	<ContextMenu name="ДокументыВыборКонтекстноеМеню" id="45"/>
-	<ExtendedTooltip name="ДокументыВыборРасширеннаяПодсказка" id="46"/>
-</CheckBoxField><InputField name="ДокументыДокумент" id="50">
+	<ContextMenu name="ДокументыВыборКонтекстноеМеню" id="48"/>
+	<ExtendedTooltip name="ДокументыВыборРасширеннаяПодсказка" id="49"/>
+</CheckBoxField><InputField name="ДокументыДокумент" id="53">
 	<DataPath>Документы.Документ</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Документ</v8:content></v8:item></Title><ReadOnly>true</ReadOnly>
-	<ContextMenu name="ДокументыДокументКонтекстноеМеню" id="48"/>
-	<ExtendedTooltip name="ДокументыДокументРасширеннаяПодсказка" id="49"/>
-</InputField><InputField name="ДокументыДата" id="53">
+	<ContextMenu name="ДокументыДокументКонтекстноеМеню" id="51"/>
+	<ExtendedTooltip name="ДокументыДокументРасширеннаяПодсказка" id="52"/>
+</InputField><InputField name="ДокументыДата" id="56">
 	<DataPath>Документы.Дата</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Дата</v8:content></v8:item></Title><ReadOnly>true</ReadOnly>
-	<ContextMenu name="ДокументыДатаКонтекстноеМеню" id="51"/>
-	<ExtendedTooltip name="ДокументыДатаРасширеннаяПодсказка" id="52"/>
-</InputField><InputField name="ДокументыОрганизация" id="56">
+	<ContextMenu name="ДокументыДатаКонтекстноеМеню" id="54"/>
+	<ExtendedTooltip name="ДокументыДатаРасширеннаяПодсказка" id="55"/>
+</InputField><InputField name="ДокументыОрганизация" id="59">
 	<DataPath>Документы.Организация</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Организация</v8:content></v8:item></Title><ReadOnly>true</ReadOnly>
-	<ContextMenu name="ДокументыОрганизацияКонтекстноеМеню" id="54"/>
-	<ExtendedTooltip name="ДокументыОрганизацияРасширеннаяПодсказка" id="55"/>
-</InputField><InputField name="ДокументыВыходСейчас" id="59">
+	<ContextMenu name="ДокументыОрганизацияКонтекстноеМеню" id="57"/>
+	<ExtendedTooltip name="ДокументыОрганизацияРасширеннаяПодсказка" id="58"/>
+</InputField><InputField name="ДокументыВыходСейчас" id="62">
 	<DataPath>Документы.ВыходСейчас</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Сумма доли выхода (сейчас)</v8:content></v8:item></Title><ReadOnly>true</ReadOnly>
-	<ContextMenu name="ДокументыВыходСейчасКонтекстноеМеню" id="57"/>
-	<ExtendedTooltip name="ДокументыВыходСейчасРасширеннаяПодсказка" id="58"/>
-</InputField><InputField name="ДокументыСебестоимостьСейчас" id="62">
+	<ContextMenu name="ДокументыВыходСейчасКонтекстноеМеню" id="60"/>
+	<ExtendedTooltip name="ДокументыВыходСейчасРасширеннаяПодсказка" id="61"/>
+</InputField><InputField name="ДокументыСебестоимостьСейчас" id="65">
 	<DataPath>Документы.СебестоимостьСейчас</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Сумма доли с/с (сейчас)</v8:content></v8:item></Title><ReadOnly>true</ReadOnly>
-	<ContextMenu name="ДокументыСебестоимостьСейчасКонтекстноеМеню" id="60"/>
-	<ExtendedTooltip name="ДокументыСебестоимостьСейчасРасширеннаяПодсказка" id="61"/>
-</InputField><InputField name="ДокументыРезультат" id="65">
+	<ContextMenu name="ДокументыСебестоимостьСейчасКонтекстноеМеню" id="63"/>
+	<ExtendedTooltip name="ДокументыСебестоимостьСейчасРасширеннаяПодсказка" id="64"/>
+</InputField><InputField name="ДокументыРезультат" id="68">
 	<DataPath>Документы.Результат</DataPath>
 	<Title><v8:item><v8:lang>ru</v8:lang><v8:content>Результат</v8:content></v8:item></Title><ReadOnly>true</ReadOnly>
-	<ContextMenu name="ДокументыРезультатКонтекстноеМеню" id="63"/>
-	<ExtendedTooltip name="ДокументыРезультатРасширеннаяПодсказка" id="64"/>
+	<ContextMenu name="ДокументыРезультатКонтекстноеМеню" id="66"/>
+	<ExtendedTooltip name="ДокументыРезультатРасширеннаяПодсказка" id="67"/>
 </InputField>
 	</ChildItems>
 </Table>
 	</ChildItems>
 	<Attributes>
-		<Attribute name="Объект" id="1"><Type><v8:Type>cfg:ExternalDataProcessorObject.РазделкаПересчетДолей</v8:Type></Type><MainAttribute>true</MainAttribute></Attribute><Attribute name="Организация" id="2"><Type><v8:Type>cfg:CatalogRef.Организации</v8:Type></Type></Attribute><Attribute name="ДатаС" id="3"><Type><v8:Type>xs:dateTime</v8:Type><v8:DateQualifiers><v8:DateFractions>Date</v8:DateFractions></v8:DateQualifiers></Type></Attribute><Attribute name="ДатаПо" id="4"><Type><v8:Type>xs:dateTime</v8:Type><v8:DateQualifiers><v8:DateFractions>Date</v8:DateFractions></v8:DateQualifiers></Type></Attribute><Attribute name="ВидЦенПоУмолчанию" id="5"><Type><v8:Type>cfg:CatalogRef.ВидыЦен</v8:Type></Type></Attribute><Attribute name="МинДоля" id="6"><Type><v8:Type>xs:decimal</v8:Type><v8:NumberQualifiers><v8:Digits>3</v8:Digits><v8:FractionDigits>2</v8:FractionDigits><v8:AllowedSign>Nonnegative</v8:AllowedSign></v8:NumberQualifiers></Type></Attribute><Attribute name="ТолькоНеверные" id="7"><Type><v8:Type>xs:boolean</v8:Type></Type></Attribute><Attribute name="Документы" id="8"><Type><v8:Type>v8:ValueTable</v8:Type></Type><Columns><Column name="Выбор" id="1"><Type><v8:Type>xs:boolean</v8:Type></Type></Column><Column name="Документ" id="2"><Type><v8:Type>cfg:DocumentRef.питРазделка</v8:Type></Type></Column><Column name="Дата" id="3"><Type><v8:Type>xs:dateTime</v8:Type><v8:DateQualifiers><v8:DateFractions>DateTime</v8:DateFractions></v8:DateQualifiers></Type></Column><Column name="Организация" id="4"><Type><v8:Type>cfg:CatalogRef.Организации</v8:Type></Type></Column><Column name="ВыходСейчас" id="5"><Type><v8:Type>xs:decimal</v8:Type><v8:NumberQualifiers><v8:Digits>7</v8:Digits><v8:FractionDigits>3</v8:FractionDigits><v8:AllowedSign>Nonnegative</v8:AllowedSign></v8:NumberQualifiers></Type></Column><Column name="СебестоимостьСейчас" id="6"><Type><v8:Type>xs:decimal</v8:Type><v8:NumberQualifiers><v8:Digits>7</v8:Digits><v8:FractionDigits>2</v8:FractionDigits><v8:AllowedSign>Nonnegative</v8:AllowedSign></v8:NumberQualifiers></Type></Column><Column name="Результат" id="7"><Type><v8:Type>xs:string</v8:Type><v8:StringQualifiers><v8:Length>0</v8:Length><v8:AllowedLength>Variable</v8:AllowedLength></v8:StringQualifiers></Type></Column></Columns></Attribute>
+		<Attribute name="Объект" id="1"><Type><v8:Type>cfg:ExternalDataProcessorObject.РазделкаПересчетДолей</v8:Type></Type><MainAttribute>true</MainAttribute></Attribute><Attribute name="Организация" id="2"><Type><v8:Type>cfg:CatalogRef.Организации</v8:Type></Type></Attribute><Attribute name="ДатаС" id="3"><Type><v8:Type>xs:dateTime</v8:Type><v8:DateQualifiers><v8:DateFractions>Date</v8:DateFractions></v8:DateQualifiers></Type></Attribute><Attribute name="ДатаПо" id="4"><Type><v8:Type>xs:dateTime</v8:Type><v8:DateQualifiers><v8:DateFractions>Date</v8:DateFractions></v8:DateQualifiers></Type></Attribute><Attribute name="ВидЦенПоУмолчанию" id="5"><Type><v8:Type>cfg:CatalogRef.ВидыЦен</v8:Type></Type></Attribute><Attribute name="МинДоля" id="6"><Type><v8:Type>xs:decimal</v8:Type><v8:NumberQualifiers><v8:Digits>3</v8:Digits><v8:FractionDigits>2</v8:FractionDigits><v8:AllowedSign>Nonnegative</v8:AllowedSign></v8:NumberQualifiers></Type></Attribute><Attribute name="ТолькоНеверные" id="7"><Type><v8:Type>xs:boolean</v8:Type></Type></Attribute><Attribute name="ПоследниеЦены" id="9"><Type><v8:Type>xs:boolean</v8:Type></Type></Attribute><Attribute name="Документы" id="8"><Type><v8:Type>v8:ValueTable</v8:Type></Type><Columns><Column name="Выбор" id="1"><Type><v8:Type>xs:boolean</v8:Type></Type></Column><Column name="Документ" id="2"><Type><v8:Type>cfg:DocumentRef.питРазделка</v8:Type></Type></Column><Column name="Дата" id="3"><Type><v8:Type>xs:dateTime</v8:Type><v8:DateQualifiers><v8:DateFractions>DateTime</v8:DateFractions></v8:DateQualifiers></Type></Column><Column name="Организация" id="4"><Type><v8:Type>cfg:CatalogRef.Организации</v8:Type></Type></Column><Column name="ВыходСейчас" id="5"><Type><v8:Type>xs:decimal</v8:Type><v8:NumberQualifiers><v8:Digits>7</v8:Digits><v8:FractionDigits>3</v8:FractionDigits><v8:AllowedSign>Nonnegative</v8:AllowedSign></v8:NumberQualifiers></Type></Column><Column name="СебестоимостьСейчас" id="6"><Type><v8:Type>xs:decimal</v8:Type><v8:NumberQualifiers><v8:Digits>7</v8:Digits><v8:FractionDigits>2</v8:FractionDigits><v8:AllowedSign>Nonnegative</v8:AllowedSign></v8:NumberQualifiers></Type></Column><Column name="Результат" id="7"><Type><v8:Type>xs:string</v8:Type><v8:StringQualifiers><v8:Length>0</v8:Length><v8:AllowedLength>Variable</v8:AllowedLength></v8:StringQualifiers></Type></Column></Columns></Attribute>
 	</Attributes>
 	<Commands>
 		<Command name="Заполнить" id="1"><Title><v8:item><v8:lang>ru</v8:lang><v8:content>Заполнить</v8:content></v8:item></Title><Action>ЗаполнитьКоманда</Action></Command><Command name="Пересчитать" id="2"><Title><v8:item><v8:lang>ru</v8:lang><v8:content>Пересчитать</v8:content></v8:item></Title><Action>ПересчитатьКоманда</Action></Command><Command name="ОтметитьВсе" id="3"><Title><v8:item><v8:lang>ru</v8:lang><v8:content>Отметить все</v8:content></v8:item></Title><Action>ОтметитьВсеКоманда</Action></Command><Command name="СнятьОтметки" id="4"><Title><v8:item><v8:lang>ru</v8:lang><v8:content>Снять отметки</v8:content></v8:item></Title><Action>СнятьОтметкиКоманда</Action></Command><Command name="ОткрытьДокумент" id="5"><Title><v8:item><v8:lang>ru</v8:lang><v8:content>Открыть документ</v8:content></v8:item></Title><Action>ОткрытьДокументКоманда</Action></Command>
