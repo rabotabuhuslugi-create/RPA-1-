@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from . import settings
 from .ocr import IMAGE_EXT
 from .state import State
 
@@ -78,6 +79,10 @@ def make_handler(cfg: dict, st: State):
                 self._send(200, HTML.read_bytes(), "text/html; charset=utf-8")
             elif path == "/api/state":
                 self._json(build_state(cfg, st))
+            elif path == "/api/settings":
+                self._json(settings.read(cfg))
+            elif path == "/api/pull_status":
+                self._json(settings.PULL)
             else:
                 self._send(404, b"not found", "text/plain")
 
@@ -90,6 +95,20 @@ def make_handler(cfg: dict, st: State):
                 return self._json({"ok": True})
             if u.path == "/api/resume":
                 st.set_paused(False)
+                return self._json({"ok": True})
+            if u.path == "/api/settings":
+                try:
+                    n = int(self.headers.get("Content-Length", 0))
+                    settings.update(cfg, json.loads(self.rfile.read(min(n, 100_000)) or b"{}"))
+                except (ValueError, TypeError, OSError) as e:
+                    return self._json({"ok": False, "error": f"Неверные данные: {e}"}, 400)
+                return self._json({"ok": True})
+            if u.path == "/api/test_onec":
+                return self._json(settings.test_onec(cfg))
+            if u.path == "/api/test_ocr":
+                return self._json(settings.test_ocr(cfg))
+            if u.path == "/api/pull_model":
+                settings.start_pull(cfg)
                 return self._json({"ok": True})
             if u.path == "/api/upload":
                 return self._upload(name)

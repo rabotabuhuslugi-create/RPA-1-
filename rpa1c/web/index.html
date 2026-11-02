@@ -37,6 +37,7 @@ pre{margin:0;background:#0b1220;color:#d1d5db;border-radius:10px;padding:14px;ma
 .e{color:#fca5a5}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:#9ca3af}.dot.on{background:var(--ok);animation:p 1.2s infinite}
 .tab{display:none}.tab.on{display:block}
 @media(max-width:760px){body{flex-direction:column}aside{width:auto}nav{display:flex;flex-wrap:wrap}nav button{width:auto}}
+label{display:grid;gap:4px;font-size:14px;color:var(--mut)}label input:not([type=checkbox]){font:inherit;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;color:var(--ink)}label.chk{display:flex;gap:8px;align-items:center;color:var(--ink)}summary{cursor:pointer;color:var(--mut);margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -47,6 +48,7 @@ pre{margin:0;background:#0b1220;color:#d1d5db;border-radius:10px;padding:14px;ma
     <button data-t="upload">☁️ Загрузка сканов</button>
     <button data-t="docs">📄 Документы</button>
     <button data-t="log">⌨️ Журнал</button>
+    <button data-t="settings">⚙️ Настройки</button>
   </nav>
 </aside>
 <main>
@@ -87,6 +89,39 @@ pre{margin:0;background:#0b1220;color:#d1d5db;border-radius:10px;padding:14px;ma
   <div class="card" style="overflow-x:auto"><table><thead><tr><th>Время</th><th>Файл</th><th>№</th><th>Дата</th><th>ИНН</th><th>Сумма</th><th>Статус</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
 </section>
 
+<section class="tab" id="settings">
+  <h1>Настройки</h1>
+  <div class="card" id="warn" style="display:none;background:#fef3c7;margin-bottom:20px">Заполните раздел «Подключение к 1С» и нажмите «Сохранить» — до этого робот ничего не загружает.</div>
+  <div class="card" style="margin-bottom:20px">
+    <h2>1. Распознавание документов</h2>
+    <p style="margin-top:0;color:var(--mut)">Модель Xiaomi-OCR-0 работает на этом компьютере через программу Ollama.</p>
+    <div id="ocr-state" class="row"><div class="nm">Проверяю…</div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btn-pull" style="display:none">⬇ Скачать модель (≈1 ГБ)</button>
+      <a class="btn sec" id="lnk-ollama" style="display:none;text-decoration:none" href="https://ollama.com/download/windows" target="_blank">Скачать Ollama</a>
+      <button class="btn sec" id="btn-ocr">Проверить ещё раз</button>
+    </div>
+    <div id="pull-bar" style="display:none;margin-top:12px"><div style="background:#e5e7eb;border-radius:8px;overflow:hidden"><div id="pull-fill" style="height:10px;width:0;background:var(--acc)"></div></div><small id="pull-txt" style="color:var(--mut)"></small></div>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <h2>2. Подключение к 1С</h2>
+    <form id="f" autocomplete="off" style="display:grid;gap:12px;max-width:640px">
+      <label>Адрес 1С (OData)<input name="base_url" placeholder="http://сервер/ka/odata/standard.odata"></label>
+      <label>Логин в 1С<input name="user"></label>
+      <label>Пароль<input name="password" type="password" id="pw" placeholder=""></label>
+      <label>ИНН вашей организации<input name="own_inn"></label>
+      <label>Организация (код GUID)<input name="organization_key" placeholder="00000000-0000-0000-0000-000000000000"></label>
+      <label>Склад (GUID, не обязательно)<input name="warehouse_key"></label>
+      <label>Подразделение (GUID, не обязательно)<input name="department_key"></label>
+      <label class="chk"><input type="checkbox" name="post_document"> Проводить документ автоматически (иначе — черновик на проверку)</label>
+      <label class="chk"><input type="checkbox" name="dry_run"> Тестовый режим: только распознавать, в 1С ничего не создавать</label>
+      <label>Как часто проверять папку, секунд<input name="poll_seconds" type="number" min="5"></label>
+      <details><summary>Дополнительно</summary><label>Модель распознавания (имя в Ollama)<input name="model"></label></details>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">💾 Сохранить</button><button class="btn sec" type="button" id="btn-1c">Проверить связь с 1С</button><span id="f-msg"></span></div>
+    </form>
+  </div>
+</section>
+
 <section class="tab" id="log">
   <h1>Журнал</h1>
   <pre id="logbox"></pre>
@@ -122,7 +157,7 @@ function render(d){
   $("r-speed").textContent=s.avg_seconds?`~${s.avg_seconds} с/документ`:"–";
   $("r-next").textContent=r.next_run?`через ${Math.max(0,Math.round(r.next_run-d.now))} с`:"–";
   $("btn-pause").textContent=paused?"▶ Продолжить":"⏸ Пауза";
-  $("r-note").textContent=r.online?"":"Робот не запущен: python -m rpa1c.main --dashboard";
+  $("r-note").textContent=r.online?(r.stage&&!r.current?r.stage:""):"Программа не запущена: откройте её ярлыком RPA 1С";
   const st=$("steps");st.replaceChildren();
   const ci=STAGES.indexOf(r.stage);
   STAGES.forEach((n,i)=>{if(i===4&&!(r.stage===n))return;
@@ -155,6 +190,37 @@ function render(d){
 }
 async function refresh(){try{render(await (await fetch("/api/state")).json())}catch(e){$("r-badge").textContent="нет связи с панелью";$("r-badge").className="badge b-err"}}
 refresh();setInterval(refresh,2000);
+
+// settings
+const F=$("f");
+function msg(t,ok){const m=$("f-msg");m.textContent=t;m.style.color=ok?"var(--ok)":"var(--err)"}
+async function loadSettings(){
+  const d=await (await fetch("/api/settings")).json();
+  for(const e of F.elements){if(!e.name||e.name==="password")continue;
+    if(e.type==="checkbox")e.checked=!!d[e.name];else e.value=d[e.name]??""}
+  $("pw").placeholder=d.has_password?"•••••••• (сохранён, оставьте пустым чтобы не менять)":"";
+  $("warn").style.display=d.configured||d.dry_run?"none":"block";
+  if(!d.configured&&!d.dry_run)document.querySelector('nav button[data-t=settings]').click();
+}
+F.onsubmit=async e=>{e.preventDefault();const b={};
+  for(const x of F.elements){if(!x.name)continue;b[x.name]=x.type==="checkbox"?x.checked:x.value}
+  const r=await (await fetch("/api/settings",{method:"POST",body:JSON.stringify(b)})).json();
+  msg(r.ok?"Сохранено":(r.error||"Ошибка"),r.ok);if(r.ok){$("pw").value="";loadSettings();checkOcr()}};
+$("btn-1c").onclick=async()=>{msg("Проверяю…",true);const r=await (await fetch("/api/test_onec",{method:"POST"})).json();msg(r.message,r.ok)};
+async function checkOcr(){
+  const r=await (await fetch("/api/test_ocr",{method:"POST"})).json(),box=$("ocr-state");
+  box.replaceChildren(el("div","nm",(r.ok?"✅ ":"⚠️ ")+r.message));
+  $("btn-pull").style.display=r.need==="model"?"":"none";
+  $("lnk-ollama").style.display=r.need==="ollama"?"":"none";
+}
+$("btn-ocr").onclick=checkOcr;
+$("btn-pull").onclick=async()=>{await post("/api/pull_model");$("pull-bar").style.display="block";pollPull()};
+async function pollPull(){
+  const p=await (await fetch("/api/pull_status")).json();
+  $("pull-fill").style.width=p.percent+"%";
+  $("pull-txt").textContent=p.error?("Ошибка: "+p.error):`${p.status} ${p.percent}%`;
+  if(p.running)setTimeout(pollPull,1000);else if(!p.error)checkOcr()}
+loadSettings();checkOcr();
 
 // upload
 const drop=$("drop"),fi=$("file");

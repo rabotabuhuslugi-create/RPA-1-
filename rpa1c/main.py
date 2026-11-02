@@ -49,7 +49,7 @@ def process(path: Path, cfg: dict, onec: OneC | None, dry_run: bool, st: State, 
     log.info("Создан документ %s", doc.get("Number"))
 
 
-def run_once(cfg: dict, dry_run: bool, st: State) -> int:
+def run_once(cfg: dict, dry_run: bool, st: State, seen: set | None = None) -> int:
     onec = None if dry_run else OneC(cfg["onec"])
     inbox = Path(cfg["folders"]["inbox"])
     n = 0
@@ -58,6 +58,11 @@ def run_once(cfg: dict, dry_run: bool, st: State) -> int:
             continue
         if st.paused():
             break
+        key = (f.name, f.stat().st_mtime)
+        if seen is not None:
+            if key in seen:
+                continue
+            seen.add(key)
         n += 1
         rec = {"file": f.name, "status": "error"}
         t0 = time.time()

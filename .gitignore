@@ -6,3 +6,7 @@ errors/
 .venv/
 debug/
 state/
+.build-venv/
+build/
+dist/
+*.spec

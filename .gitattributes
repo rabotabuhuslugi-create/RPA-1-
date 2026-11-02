@@ -1,0 +1,2 @@
+start.bat text eol=crlf
+build_exe.bat text eol=crlf
