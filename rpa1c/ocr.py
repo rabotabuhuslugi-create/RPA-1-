@@ -23,7 +23,7 @@ DEFAULT_PROMPT = (
 def _load_pages(path: Path, cfg: dict) -> list:
     ext = path.suffix.lower()
     if ext == ".pdf":
-        import fitz  # PyMuPDF: не требует установки Poppler
+        import pymupdf as fitz  # PyMuPDF: не требует установки Poppler
 
         zoom = cfg.get("dpi", 300) / 72
         with fitz.open(str(path)) as doc:
@@ -52,12 +52,13 @@ def _xiaomi_page(img: Image.Image, cfg: dict) -> str:
     payload = {
         "model": x.get("model", "xiaomi-ocr-0"),
         "stream": False,
-        "options": {"temperature": 0},
+        "options": {"temperature": 0, "num_predict": x.get("max_tokens", 3000), "repeat_penalty": 1.1},
+        "keep_alive": "30m",
         "messages": [
             {
                 "role": "user",
                 "content": x.get("prompt", DEFAULT_PROMPT),
-                "images": [_to_png_b64(img, x.get("max_side", 2048))],
+                "images": [_to_png_b64(img, x.get("max_side", 1600))],
             }
         ],
     }
@@ -75,15 +76,20 @@ def _tesseract_page(img: Image.Image, cfg: dict) -> str:
     return pytesseract.image_to_string(img, lang=cfg.get("lang", "rus+eng"))
 
 
-def scan_to_text(path: Path, cfg: dict) -> str:
+def scan_to_text(path: Path, cfg: dict, progress=None) -> str:
     pages = _load_pages(path, cfg)
+    progress = progress or (lambda i, n: None)
     engine = cfg.get("engine", "xiaomi")
     if engine == "tesseract":
         return "\n".join(_tesseract_page(p, cfg) for p in pages)
     if engine != "xiaomi":
         raise ValueError(f"Неизвестный ocr.engine: {engine}")
     try:
-        return "\n".join(_xiaomi_page(p, cfg) for p in pages)
+        out = []
+        for i, p in enumerate(pages, 1):
+            progress(i, len(pages))
+            out.append(_xiaomi_page(p, cfg))
+        return "\n".join(out)
     except (requests.RequestException, RuntimeError):
         if not cfg.get("fallback_tesseract", True):
             raise

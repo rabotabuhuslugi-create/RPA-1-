@@ -159,8 +159,8 @@ function render(d){
   $("btn-pause").textContent=paused?"▶ Продолжить":"⏸ Пауза";
   $("r-note").textContent=r.online?(r.stage&&!r.current?r.stage:""):"Программа не запущена: откройте её ярлыком RPA 1С";
   const st=$("steps");st.replaceChildren();
-  const ci=STAGES.indexOf(r.stage);
-  STAGES.forEach((n,i)=>{if(i===4&&!(r.stage===n))return;
+  const ci=STAGES.findIndex(n=>(r.stage||'').startsWith(n));
+  STAGES.forEach((n,i)=>{if(i===4&&ci!==4)return;
     st.append(el("div","step"+(ci>i?" done":ci===i?" cur":""),(ci>i?"✓ ":"")+n))});
   // recent
   const rc=$("recent");rc.replaceChildren();

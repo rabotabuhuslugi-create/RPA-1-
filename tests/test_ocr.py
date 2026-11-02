@@ -27,7 +27,7 @@ def test_fallback_to_tesseract(tmp_path):
 
 
 def test_pdf_pages(tmp_path):
-    import fitz
+    import pymupdf as fitz
 
     d = fitz.open()
     d.new_page().insert_text((72, 72), "Test")

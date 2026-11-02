@@ -49,3 +49,10 @@ def test_regulation_date_ignored():
             "Счет-фактура № ТК0000000309 (1)\nПродавец ИНН 263203039147\n")
     d = parse(text, filename="УПД №ТК0000000309 от 31.08.26")
     assert d.doc_date == date(2026, 8, 31)
+
+
+def test_total_before_vat_phrase():
+    from rpa1c.parser import _totals
+
+    t, v = _totals("Всего к оплате 12 000,00 в т.ч. НДС 2 000,00")
+    assert str(t) == "12000.00" and str(v) == "2000.00"

@@ -139,6 +139,13 @@ def _totals(text: str) -> tuple[Decimal | None, Decimal | None]:
                     continue
                 total = nums[-1]
                 vat = nums[-2] if len(nums) >= 3 else None
+                # «Всего к оплате 12 000,00 в т.ч. НДС 2 000,00»: сумма стоит ДО слов «в т.ч. НДС»
+                inc = re.search(r"в\s+т\.?\s*ч\.?|в\s+том\s+числе", ln, re.I)
+                before = _amounts(ln[:inc.start()]) if inc else []
+                if before:
+                    total = before[-1]
+                    after = _amounts(ln[inc.end():])
+                    vat = after[0] if after else vat
                 m = re.search(r"НДС[^\d\n]*(" + MONEY + ")", " ".join(lines[idx:idx + span + 1]), re.I)
                 if m and len(nums) > 1:
                     vat = _money(m[1])

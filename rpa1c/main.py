@@ -19,7 +19,10 @@ log = logging.getLogger("rpa1c")
 def process(path: Path, cfg: dict, onec: OneC | None, dry_run: bool, st: State, rec: dict) -> None:
     st.set_status(current=path.name, stage="Распознавание (OCR)")
     log.info("Начало: %s", path.name)
-    text = scan_to_text(path, cfg["ocr"])
+    text = scan_to_text(
+        path, cfg["ocr"],
+        lambda i, n: st.set_status(stage=f"Распознавание (OCR) — страница {i} из {n}"),
+    )
     dbg = Path(cfg["folders"].get("debug", "./debug"))
     dbg.mkdir(parents=True, exist_ok=True)
     (dbg / f"{path.name}.txt").write_text(text, encoding="utf-8")

@@ -11,8 +11,8 @@ DEFAULTS = {
     "ocr": {
         "engine": "xiaomi", "fallback_tesseract": True,
         "xiaomi": {"url": "http://127.0.0.1:11434", "model": "richardyoung/xiaomi-ocr-0",
-                   "max_side": 2048, "timeout": 300},
-        "lang": "rus+eng", "tesseract_cmd": None, "poppler_path": None, "dpi": 300,
+                   "max_side": 1600, "max_tokens": 3000, "timeout": 300},
+        "lang": "rus+eng", "tesseract_cmd": None, "poppler_path": None, "dpi": 200,
     },
     "onec": {
         "base_url": "", "user": "", "password": "", "password_env": "ONEC_PASSWORD",

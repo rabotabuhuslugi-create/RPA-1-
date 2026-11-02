@@ -1,2 +1,3 @@
 start.bat text eol=crlf
 build_exe.bat text eol=crlf
+stop.bat text eol=crlf
