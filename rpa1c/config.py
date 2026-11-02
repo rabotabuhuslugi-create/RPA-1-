@@ -48,13 +48,12 @@ def _read_file(path: str) -> dict:
     try:
         return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
     except yaml.YAMLError as e:
-        mark = getattr(e, "problem_mark", None)
-        where = f" (строка {mark.line + 1})" if mark else ""
-        raise SystemExit(
-            f"Ошибка в файле {path}{where}: проверьте отступы и двоеточия в этом месте.\n"
-            f"Например, вместо `extra_document_fields: {{}}` с припиской ниже должно быть:\n"
-            f"  extra_document_fields:\n    ИмяРеквизита: \"значение\"\n\n{e}"
-        ) from None
+        # сломанный файл не мешает запуску: откладываем его в сторону, настройки введут в панели
+        bak = p.with_name(p.stem + ".broken" + p.suffix)
+        p.replace(bak)
+        print(f"В {path} была ошибка ({e.__class__.__name__}). Файл сохранён как {bak.name}, "
+              "создан новый — заполните настройки в панели.")
+        return {}
 
 
 def load(path: str = "config.yaml") -> dict:

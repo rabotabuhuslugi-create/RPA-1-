@@ -47,6 +47,19 @@ def robot_loop(cfg: dict, st: State, stop: threading.Event) -> None:
             st.set_status()
 
 
+def _auto_model(cfg: dict) -> None:
+    """Если Ollama работает, а модели нет - скачиваем её сами."""
+    from . import settings
+
+    try:
+        r = settings.test_ocr(cfg)
+        if r.get("need") == "model":
+            log.info("Скачиваю модель распознавания %s...", cfg["ocr"]["xiaomi"]["model"])
+            settings.start_pull(cfg)
+    except Exception as e:  # noqa: BLE001
+        log.warning("Автозагрузка модели не удалась: %s", e)
+
+
 def main() -> None:
     os.chdir(base_dir())
     cfg = cfgmod.load("config.yaml")
@@ -66,6 +79,7 @@ def main() -> None:
         webbrowser.open(url)  # уже запущена: просто открываем панель
         print("Программа уже запущена, открываю панель.")
         return
+    threading.Thread(target=_auto_model, args=(cfg,), daemon=True).start()
     stop = threading.Event()
     threading.Thread(target=robot_loop, args=(cfg, st, stop), daemon=True).start()
     print(f"RPA 1С запущена. Панель: {url}\nНе закрывайте это окно, пока нужна работа робота.")
