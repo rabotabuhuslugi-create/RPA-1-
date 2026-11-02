@@ -7,6 +7,13 @@ folders:
   state: ./state          # статус, история и журнал для панели управления
 
 ocr:
+  engine: xiaomi         # xiaomi (Xiaomi-OCR-0 через Ollama) или tesseract
+  fallback_tesseract: true   # если Ollama недоступна - распознать Tesseract
+  xiaomi:
+    url: http://127.0.0.1:11434
+    model: xiaomi-ocr-0   # имя модели в `ollama list` (см. страницу модели на Ollama)
+    max_side: 2048        # уменьшать страницу до этого размера по длинной стороне
+    timeout: 300
   lang: rus+eng
   tesseract_cmd: null     # напр. C:\Program Files\Tesseract-OCR\tesseract.exe
   poppler_path: null      # Windows: путь к bin Poppler для PDF
