@@ -23,11 +23,15 @@ DEFAULT_PROMPT = (
 def _load_pages(path: Path, cfg: dict) -> list:
     ext = path.suffix.lower()
     if ext == ".pdf":
-        from pdf2image import convert_from_path
+        import fitz  # PyMuPDF: не требует установки Poppler
 
-        return convert_from_path(
-            str(path), dpi=cfg.get("dpi", 300), poppler_path=cfg.get("poppler_path")
-        )
+        zoom = cfg.get("dpi", 300) / 72
+        with fitz.open(str(path)) as doc:
+            out = []
+            for page in doc:
+                pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
+                out.append(Image.frombytes("RGB", (pix.width, pix.height), pix.samples))
+        return out
     if ext in IMAGE_EXT:
         return [Image.open(path)]
     raise ValueError(f"Неподдерживаемый формат: {ext}")

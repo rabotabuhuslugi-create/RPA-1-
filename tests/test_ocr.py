@@ -24,3 +24,15 @@ def test_fallback_to_tesseract(tmp_path):
     with patch.object(ocr.requests, "post", side_effect=requests.ConnectionError()), \
          patch.object(ocr, "_tesseract_page", return_value="tess"):
         assert ocr.scan_to_text(_img(tmp_path), {"engine": "xiaomi"}) == "tess"
+
+
+def test_pdf_pages(tmp_path):
+    import fitz
+
+    d = fitz.open()
+    d.new_page().insert_text((72, 72), "Test")
+    d.new_page()
+    p = tmp_path / "a.pdf"
+    d.save(str(p))
+    pages = ocr._load_pages(p, {"dpi": 100})
+    assert len(pages) == 2 and pages[0].size[0] > 100
