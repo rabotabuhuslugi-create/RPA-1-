@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:mxl="http://v8.1c.ru/8.2/data/spreadsheet" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.11">
-	<ExternalDataProcessor uuid="762d60b8-8f71-4f0a-a2e2-d6e697cf77f7">
+	<ExternalDataProcessor uuid="4d1d1149-b75c-487f-8133-174eaf8b6aba">
 		<InternalInfo>
-			<xr:ContainedObject><xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId><xr:ObjectId>a927c433-733d-4c4f-adb4-164cc9b9a59b</xr:ObjectId></xr:ContainedObject>
-			<xr:GeneratedType name="ExternalDataProcessorObject.СверкаАктовСПоставщиком" category="Object"><xr:TypeId>af3c7a82-a101-4494-8ea4-9924b3cc4912</xr:TypeId><xr:ValueId>eefd1955-3f10-415c-894a-899ecf3a55e2</xr:ValueId></xr:GeneratedType>
+			<xr:ContainedObject><xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId><xr:ObjectId>c77d7a0e-49d1-4c80-8e9b-4279748cb1c4</xr:ObjectId></xr:ContainedObject>
+			<xr:GeneratedType name="ExternalDataProcessorObject.СверкаАктовСПоставщиком" category="Object"><xr:TypeId>321cfd6d-973e-4889-8d8c-40444db3a9b0</xr:TypeId><xr:ValueId>948e3acc-d64b-44bd-a49a-8fe591e9dd6b</xr:ValueId></xr:GeneratedType>
 		</InternalInfo>
 		<Properties>
 			<Name>СверкаАктовСПоставщиком</Name>
