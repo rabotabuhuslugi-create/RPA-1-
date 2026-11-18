@@ -17,7 +17,6 @@
 			<Comment/>
 			<DefaultForm>ExternalDataProcessor.ЗакрытиеПериода.Form.Форма</DefaultForm>
 			<AuxiliaryForm/>
-			<ExplanationDefault/>
 		</Properties>
 		<ChildObjects>
 			<Form>Форма</Form>
